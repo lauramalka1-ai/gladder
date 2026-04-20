@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Gladder"/>
+<meta name="theme-color" content="#f5e6f0"/>
+<title>Gladder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Serif+Display:ital@0;1&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg: #faf7f5;
+  --card: #ffffff;
+  --accent: #c084a8;
+  --accent2: #7bb89a;
+  --accent3: #e8a87c;
+  --text: #1a1410;
+  --text2: #6b5c52;
+  --text3: #a89890;
+  --border: #ece5e0;
+  --green: #7bb89a;
+  --red: #d97070;
+  --purple: #9b72b8;
+  --radius: 18px;
+  --font: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:var(--font);color:var(--text);font-size:15px;}
+
+/* APP SHELL */
+.app{
+  max-width:430px;
+  margin:0 auto;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg);
+  position:relative;
+  overflow:hidden;
+}
+
+/* SCROLL CONTAINER */
+.scroll-area{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding-top:calc(var(--safe-top));
+  padding-bottom:calc(70px + var(--safe-bottom));
+}
+.scroll-area::-webkit-scrollbar{display:none;}
+
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── JOURNAL ── */
+.journal-header{
+  padding:20px 18px 0;
+}
+.week-nav{display:flex;align-items:center;gap:6px;}
+.week-arrow{
+  background:var(--card);
+  border:none;
+  width:36px;height:36px;
+  border-radius:12px;
+  font-size:16px;color:var(--text2);
+  cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.week-scroll{
+  display:flex;gap:4px;overflow-x:auto;flex:1;
+  scrollbar-width:none;padding:2px 0;
+}
+.week-scroll::-webkit-scrollbar{display:none;}
+.day-pill{
+  display:flex;flex-direction:column;align-items:center;
+  padding:6px 10px;border-radius:12px;cursor:pointer;
+  min-width:42px;flex-shrink:0;transition:all .15s;
+}
+.day-pill.active{background:var(--accent);color:white;}
+.day-pill .dabbr{font-size:10px;font-weight:500;color:var(--text3);margin-bottom:2px;}
+.day-pill .dnum{font-size:15px;font-weight:600;color:var(--text2);}
+.day-pill.active .dabbr,.day-pill.active .dnum{color:white;}
+
+/* SUMMARY CARD */
+.summary-card{
+  margin:14px 18px 0;
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:0 2px 12px rgba(0,0,0,.05);
+}
+.sum-day{
+  font-family:var(--font-display);
+  font-size:20px;
+  color:var(--text);
+  text-align:center;
+  margin-bottom:14px;
+}
+.cats-row{display:flex;gap:10px;margin-bottom:10px;}
+.cats-row.row2{justify-content:center;}
+.cats-row.row2 .cat-block{flex:0 0 calc(33.33% - 7px);}
+.cat-block{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.cat-label{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--text2);white-space:nowrap;}
+.cat-label span.icon{font-size:12px;}
+.boxes{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
+.box{width:12px;height:12px;border-radius:3px;border:2px solid;position:relative;overflow:hidden;flex-shrink:0;}
+.box.half::after{content:'';position:absolute;left:0;top:0;width:50%;height:100%;background:currentColor;}
+.box.carry{opacity:.3;}
+.box.over::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,currentColor 0,currentColor 2px,transparent 2px,transparent 5px);}
+
+/* ECARTS BAR */
+.ecarts-bar{
+  border-top:1px solid var(--border);
+  padding-top:10px;margin-top:6px;
+}
+.ecarts-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;}
+.ecarts-info .label{font-weight:600;color:var(--text2);}
+.ecarts-info .val{color:var(--text3);}
+.ecarts-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.ecarts-fill{height:100%;border-radius:3px;transition:width .3s;}
+
+/* MEALS */
+.meals-list{padding:12px 18px 8px;}
+.meal-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  margin-bottom:10px;
+  box-shadow:0 1px 6px rgba(0,0,0,.04);
+  overflow:hidden;
+}
+.meal-card.coll{background:rgba(255,255,255,.65);backdrop-filter:blur(8px);}
+.meal-card.ec-card{border:1.5px solid #fdd5d5;}
+.meal-top{
+  padding:14px 16px 0;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  cursor:pointer;
+}
+.meal-left{flex:1;}
+.meal-name{font-size:15px;font-weight:600;color:var(--text);}
+.meal-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.meal-emoji{font-size:42px;line-height:1;flex-shrink:0;margin-left:8px;margin-top:-4px;}
+.meal-divider{height:1px;background:var(--border);margin:10px 16px 0;}
+.meal-open-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px 12px;cursor:pointer;
+}
+.add-btn{
+  background:rgba(123,184,154,.15);
+  border:none;border-radius:10px;
+  padding:8px 16px;
+  font-family:var(--font);font-size:13px;font-weight:600;
+  color:var(--green);cursor:pointer;
+}
+.add-btn.red{background:rgba(217,112,112,.1);color:var(--red);}
+
+/* ENTRIES */
+.entries{padding:0 16px 4px;}
+.entry{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.entry:last-child{border-bottom:none;}
+.entry-l{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.edot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.rdot{width:9px;height:9px;border-radius:2px;background:var(--purple);flex-shrink:0;}
+.entry-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.entry-r{display:flex;align-items:center;gap:4px;flex-shrink:0;font-size:11px;}
+.entry-cases{color:var(--text2);}
+.entry-qty{color:var(--text3);}
+.edit-btn{background:none;border:.5px solid var(--border);color:var(--text3);cursor:pointer;font-size:10px;padding:2px 6px;border-radius:5px;font-family:var(--font);}
+.del-btn{background:none;border:none;color:#ffbbbb;cursor:pointer;font-size:13px;padding:1px 3px;}
+.del-btn:hover{color:var(--red);}
+
+/* REC ENTRY */
+.rec-entry{padding:6px 0;border-bottom:1px solid var(--border);}
+.rec-entry:last-child{border-bottom:none;}
+.rec-entry-top{display:flex;align-items:center;justify-content:space-between;}
+.rec-entry-l{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.rec-entry-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rec-parts{font-size:11px;color:var(--purple);background:rgba(155,114,184,.1);padding:1px 6px;border-radius:6px;flex-shrink:0;margin-left:4px;}
+.rec-bilan-line{font-size:11px;color:var(--purple);margin-top:2px;padding-left:16px;}
+
+/* EDIT ROW */
+.edit-row{display:flex;gap:6px;align-items:center;padding:4px 16px 6px;border-bottom:1px solid var(--border);}
+.edit-row input{flex:1;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--accent2);background:#f6fdf9;font-family:var(--font);}
+.edit-row .ulab{font-size:11px;color:var(--text3);}
+.edit-row button{padding:5px 10px;font-size:12px;border-radius:8px;border:1px solid var(--accent2);background:rgba(123,184,154,.15);color:var(--green);cursor:pointer;font-family:var(--font);}
+
+/* ADD FORM */
+.add-form{padding:8px 16px 12px;border-top:1px solid var(--border);}
+.fld{
+  width:100%;font-size:14px;padding:9px 13px;
+  border-radius:12px;border:1.5px solid var(--border);
+  background:#fafafa;color:var(--text);
+  font-family:var(--font);outline:none;
+  transition:border-color .15s;
+}
+.fld:focus{border-color:var(--accent);}
+.qty-wrap{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.qty-wrap input{flex:1;font-size:14px;padding:9px 12px;border-radius:12px;border:1.5px solid var(--border);background:#fafafa;font-family:var(--font);outline:none;}
+.qty-wrap input:focus{border-color:var(--accent);}
+.ulab{font-size:12px;color:var(--text3);white-space:nowrap;}
+.sub-btn{padding:9px 16px;font-size:13px;border-radius:12px;border:1.5px solid var(--accent2);background:rgba(123,184,154,.12);color:var(--green);cursor:pointer;font-family:var(--font);font-weight:600;white-space:nowrap;}
+.hint-txt{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* SELECTED FOOD */
+.sfbar{display:flex;align-items:center;justify-content:space-between;background:rgba(123,184,154,.1);border-radius:10px;padding:7px 12px;margin-top:6px;}
+.sfname{font-size:13px;color:var(--green);font-weight:600;}
+.sfclear{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;}
+
+/* VEG BOX */
+.vegbox{display:flex;align-items:center;justify-content:space-between;background:rgba(123,184,154,.1);border-radius:12px;padding:9px 13px;margin-top:6px;}
+.vegadd{padding:6px 13px;font-size:13px;border-radius:9px;border:1.5px solid var(--accent2);background:rgba(123,184,154,.15);color:var(--green);cursor:pointer;font-family:var(--font);font-weight:600;}
+
+/* REC BOX (confirmation) */
+.recbox{background:rgba(155,114,184,.08);border-radius:12px;padding:10px 13px;margin-top:6px;border:1.5px solid rgba(155,114,184,.2);}
+.recbox-name{font-size:13px;color:var(--purple);font-weight:600;margin-bottom:2px;}
+.recbox-bilan{font-size:11px;color:var(--purple);opacity:.8;margin-bottom:8px;}
+.recbox-row{display:flex;align-items:center;justify-content:space-between;}
+.parts-ctrl{display:flex;align-items:center;gap:8px;}
+.pb{background:white;border:1.5px solid rgba(155,114,184,.3);border-radius:8px;padding:4px 10px;font-size:14px;color:var(--purple);cursor:pointer;}
+.pval{font-size:14px;font-weight:600;color:var(--purple);min-width:18px;text-align:center;}
+.plab{font-size:12px;color:var(--purple);}
+.recadd-btn{padding:8px 16px;background:var(--purple);border:none;border-radius:10px;font-size:13px;font-weight:600;color:white;cursor:pointer;font-family:var(--font);}
+
+/* ECART MODE TABS */
+.etabs{display:flex;gap:6px;margin-bottom:8px;}
+.etab{flex:1;padding:6px;font-size:12px;border-radius:10px;border:1.5px solid var(--border);background:#fafafa;color:var(--text3);cursor:pointer;text-align:center;font-family:var(--font);}
+.etab.on{background:rgba(217,112,112,.1);color:var(--red);border-color:rgba(217,112,112,.3);}
+
+/* ── DROPDOWN ── */
+.acdrop{
+  position:fixed;background:var(--card);
+  border-radius:14px;
+  border:1px solid var(--border);
+  box-shadow:0 8px 32px rgba(0,0,0,.12);
+  z-index:9999;max-height:230px;overflow-y:auto;display:none;
+}
+.acrow{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+.acrow:last-child{border-bottom:none;}
+.acrow:active{background:var(--bg);}
+.actag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:500;}
+.artag{font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(155,114,184,.12);color:var(--purple);font-weight:500;}
+
+/* ── RÉFÉRENCE ── */
+.page-header{
+  padding:24px 18px 6px;
+  font-family:var(--font-display);
+  font-size:26px;color:var(--text);
+}
+.ref-search{
+  width:calc(100% - 36px);margin:0 18px 12px;
+  font-size:14px;padding:10px 14px;
+  border-radius:14px;border:1.5px solid var(--border);
+  background:var(--card);color:var(--text);
+  font-family:var(--font);outline:none;display:block;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.ref-search:focus{border-color:var(--accent);}
+#refres,#refcats{padding:0 18px;}
+.ref-result{background:var(--card);border-radius:14px;padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.catsec{background:var(--card);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.catheader{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;}
+.cathl{display:flex;align-items:center;gap:8px;}
+.cchev{font-size:12px;color:var(--text3);transition:transform .2s;}
+.cchev.open{transform:rotate(180deg);}
+.catitems{display:none;border-top:1px solid var(--border);}
+.catitems.open{display:block;}
+.catitem{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid var(--border);font-size:13px;}
+.catitem:last-child{border-bottom:none;}
+.ciqty{color:var(--green);font-weight:600;font-size:12px;}
+
+/* ── RECETTES ── */
+.rec-page-inner{padding:0 18px 10px;}
+.recgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.rectile{
+  background:var(--card);border-radius:var(--radius);
+  padding:18px 12px;display:flex;flex-direction:column;
+  align-items:center;gap:8px;cursor:pointer;
+  border:2px solid transparent;
+  box-shadow:0 1px 6px rgba(0,0,0,.05);
+  transition:border-color .15s;
+}
+.rectile:active{border-color:var(--accent);}
+.rtemoji{font-size:38px;}
+.rtlabel{font-size:14px;font-weight:600;color:var(--text);}
+.rtcount{font-size:11px;color:var(--text3);}
+.recaddbtn{
+  width:100%;padding:13px;
+  background:rgba(123,184,154,.15);border:none;
+  border-radius:14px;font-size:14px;font-weight:600;
+  color:var(--green);cursor:pointer;margin-bottom:12px;
+  font-family:var(--font);
+}
+.rlisthdr{display:flex;align-items:center;gap:10px;padding:8px 0 12px;}
+.rback{background:none;border:none;font-size:20px;color:var(--text2);cursor:pointer;}
+.rlisttitle{font-family:var(--font-display);font-size:22px;color:var(--text);}
+.rcard{background:var(--card);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.rchdr{padding:13px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.rcname{font-size:14px;font-weight:600;color:var(--text);}
+.rcbilan{font-size:11px;color:var(--text3);margin-top:2px;}
+.rcbody{display:none;border-top:1px solid var(--border);padding:12px 15px;}
+.rcbody.open{display:block;}
+.rst{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 3px;}
+.rst:first-child{margin-top:0;}
+.ring{font-size:13px;color:var(--text2);line-height:1.6;}
+.rprep{font-size:12px;color:var(--text3);line-height:1.7;}
+.rdelbtn{padding:7px 13px;background:none;border:1.5px solid #fdd5d5;border-radius:9px;font-size:12px;color:var(--red);cursor:pointer;margin-top:10px;font-family:var(--font);}
+
+/* ── BOTTOM NAV ── */
+.bnav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  display:flex;z-index:200;
+  padding-bottom:var(--safe-bottom);
+}
+.ntab{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:10px 0 11px;cursor:pointer;
+  font-size:10px;font-weight:600;color:var(--text3);gap:3px;
+  transition:color .15s;
+}
+.ntab.active{color:var(--accent);}
+.nicon{font-size:21px;}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1000;align-items:flex-end;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal{
+  background:var(--card);border-radius:22px 22px 0 0;
+  padding:20px 18px calc(24px + var(--safe-bottom));
+  width:100%;max-width:430px;max-height:88vh;overflow-y:auto;
+}
+.modal::-webkit-scrollbar{display:none;}
+.mtitle{font-family:var(--font-display);font-size:20px;color:var(--text);margin-bottom:16px;}
+.mlabel{font-size:12px;font-weight:600;color:var(--text3);margin-bottom:4px;margin-top:12px;text-transform:uppercase;letter-spacing:.04em;}
+.minput{width:100%;font-size:14px;padding:10px 13px;border-radius:12px;border:1.5px solid var(--border);background:#fafafa;color:var(--text);font-family:var(--font);outline:none;}
+.minput:focus{border-color:var(--accent);}
+.mtxt{width:100%;font-size:13px;padding:10px 13px;border-radius:12px;border:1.5px solid var(--border);background:#fafafa;color:var(--text);font-family:var(--font);min-height:70px;resize:vertical;outline:none;}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.bgrid .mlabel{margin-top:0;}
+.mactions{display:flex;gap:10px;margin-top:18px;}
+.msave{flex:1;padding:12px;background:var(--accent);border:none;border-radius:12px;font-size:14px;font-weight:700;color:white;cursor:pointer;font-family:var(--font);}
+.mcancel{padding:12px 18px;background:var(--border);border:none;border-radius:12px;font-size:14px;color:var(--text2);cursor:pointer;font-family:var(--font);}
+
+/* SPLASH */
+.splash{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:9999;transition:opacity .4s;
+}
+.splash-logo{font-family:var(--font-display);font-size:48px;color:var(--accent);font-style:italic;}
+.splash-sub{font-size:14px;color:var(--text3);margin-top:6px;font-weight:300;}
+
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1612;--card:#252018;--border:#35302a;
+    --text:#f0e8e0;--text2:#c0a898;--text3:#7a6a60;
+  }
+  .fld,.qty-wrap input,.minput,.mtxt{background:#1e1a16;color:var(--text);}
+  .ref-search{background:var(--card);}
+}
+
+.export-btn{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:12px;padding:8px 14px;
+  font-family:var(--font);font-size:13px;font-weight:600;
+  color:var(--accent2);cursor:pointer;
+  margin:10px 18px 0;width:calc(100% - 36px);
+  justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.export-btn:active{opacity:.7;}
+
+</style>
+</head>
+<body>
+
+<!-- Splash -->
+<div class="splash" id="splash">
+  <div class="splash-logo">Gladder</div>
+  <div class="splash-sub">Suivi nutritionnel</div>
+</div>
+
+<!-- Dropdown global -->
+<div class="acdrop" id="gac"></div>
+
+<div class="app">
+  <div class="scroll-area" id="scroll-area">
+
+    <!-- ── PAGE JOURNAL ── -->
+    <div class="page active" id="page-journal">
+      <div class="journal-header">
+        <div class="week-nav">
+          <button class="week-arrow" onclick="shiftW(-1)">&#8592;</button>
+          <div class="week-scroll" id="wscroll"></div>
+          <button class="week-arrow" onclick="shiftW(1)">&#8594;</button>
+        </div>
+      </div>
+        <button class="export-btn" onclick="exporterSemainier()">
+        📊 Exporter le semainier (.xlsx)
+      </button>
+    <div style="padding:0 18px">
+        <div class="summary-card">
+          <div class="sum-day" id="sumday">Aujourd'hui</div>
+          <div id="catsbox"></div>
+          <div class="ecarts-bar" id="ecartsbar"></div>
+        </div>
+      </div>
+      <div class="meals-list" id="mealslist"></div>
+    </div>
+
+    <!-- ── PAGE RÉFÉRENCE ── -->
+    <div class="page" id="page-ref">
+      <div class="page-header">Référence</div>
+      <input class="ref-search" type="text" placeholder="Rechercher un aliment…" oninput="onRefS(this.value)" id="refinput"/>
+      <div id="refres"></div>
+      <div id="refcats"></div>
+    </div>
+
+    <!-- ── PAGE RECETTES ── -->
+    <div class="page" id="page-rec">
+      <div style="padding:0 18px 10px">
+        <div id="rechome">
+          <div class="page-header" style="padding-left:0">Recettes</div>
+          <div class="recgrid" id="recgrid"></div>
+          <button class="recaddbtn" onclick="openNewRec()">+ Ajouter une recette</button>
+        </div>
+        <div id="reclistview" style="display:none">
+          <div class="rlisthdr">
+            <button class="rback" onclick="showRecHome()">&#8592;</button>
+            <div class="rlisttitle" id="rlisttitle"></div>
+          </div>
+          <div id="rlistitems"></div>
+          <button class="recaddbtn" id="recaddinlist" style="display:none" onclick="openNewRec()">+ Ajouter une recette</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- Bottom Nav -->
+  <div class="bnav">
+    <div class="ntab active" id="tab-journal" onclick="switchTab('journal')"><span class="nicon">📋</span><span>Journal</span></div>
+    <div class="ntab" id="tab-ref" onclick="switchTab('ref')"><span class="nicon">📖</span><span>Référence</span></div>
+    <div class="ntab" id="tab-rec" onclick="switchTab('rec')"><span class="nicon">🍳</span><span>Recettes</span></div>
+  </div>
+</div>
+
+<!-- Modal nouvelle recette -->
+<div class="modal-ov" id="recmodal" onclick="closeRecModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">Nouvelle recette</div>
+    <div class="mlabel">Nom</div><input class="minput" id="rname" type="text" placeholder="Ex: Quiche sans pâte"/>
+    <div class="mlabel">Catégorie</div>
+    <select class="minput" id="rcat"><option value="plats">Plats</option><option value="sauces">Sauces</option><option value="desserts">Desserts</option><option value="mes">Mes recettes</option></select>
+    <div class="mlabel">Cases PAR PART</div>
+    <div class="bgrid">
+      <div><div class="mlabel">🐟 Protéines</div><input class="minput" id="bP" type="number" min="0" step="0.5" value="0"/></div>
+      <div><div class="mlabel">🥛 Laitages</div><input class="minput" id="bL" type="number" min="0" step="0.5" value="0"/></div>
+      <div><div class="mlabel">🫒 Graisses</div><input class="minput" id="bG" type="number" min="0" step="0.5" value="0"/></div>
+      <div><div class="mlabel">🍎 Fruits</div><input class="minput" id="bF" type="number" min="0" step="0.5" value="0"/></div>
+      <div><div class="mlabel">🍞 Féculents</div><input class="minput" id="bS" type="number" min="0" step="0.5" value="0"/></div>
+    </div>
+    <div class="mlabel">Ingrédients (optionnel)</div>
+    <textarea class="mtxt" id="ring" placeholder="1 œuf, 200 ml lait…"></textarea>
+    <div class="mlabel">Préparation (optionnel)</div>
+    <textarea class="mtxt" id="rprep" placeholder="Mélangez…"></textarea>
+    <div class="mactions">
+      <button class="mcancel" onclick="closeRecModal()">Annuler</button>
+      <button class="msave" onclick="saveRec()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════
+var BQ={P:6,L:3,G:3,F:3,S:4};
+var CARRY=['L','G','F','S'];
+var EB=500;
+var CMETA={
+  P:{label:'Protéines',icon:'🐟',color:'#5c9fe8',border:'#85B7EB'},
+  L:{label:'Laitages',icon:'🥛',color:'#9e9b94',border:'#C0B8B0'},
+  G:{label:'Graisses',icon:'🫒',color:'#7bb89a',border:'#a0d4bc'},
+  F:{label:'Fruits',icon:'🍎',color:'#d97070',border:'#F09595'},
+  S:{label:'Féculents',icon:'🍞',color:'#c8874a',border:'#e8a87c'}
+};
+var CV={P:'#5c9fe8',L:'#9e9b94',G:'#c8874a',F:'#d97070',S:'#9b72b8',V:'#7bb89a'};
+var CL={P:'Protéines',L:'Laitages',G:'Mat. grasses',F:'Fruits',S:'Féculents',V:'Légumes'};
+var MDEF=[
+  {name:'Petit-déjeuner',sub:'',coll:false,il:'🍳'},
+  {name:'Collation matinale',sub:'(optionnelle)',coll:true,il:'🥣'},
+  {name:'Déjeuner',sub:'',coll:false,il:'🥗'},
+  {name:"Collation de l'après-midi",sub:'(optionnelle)',coll:true,il:'🍓'},
+  {name:'Dîner',sub:'',coll:false,il:'🍽'}
+];
+
+function nrm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae');}
+
+var FOODS=[
+  {name:'Abats',cat:'P',unit:'g',per:30},{name:'Bœuf',cat:'P',unit:'g',per:30},{name:'Jambon dégraissé',cat:'P',unit:'g',per:30},{name:'Lapin',cat:'P',unit:'g',per:30},{name:'Veau',cat:'P',unit:'g',per:30},{name:'Volaille sans peau',cat:'P',unit:'g',per:30},{name:'Poulet',cat:'P',unit:'g',per:30},{name:'Œuf',cat:'P',unit:'unité',per:1},{name:'Crustacés',cat:'P',unit:'g',per:60},{name:'Poisson maigre',cat:'P',unit:'g',per:60},{name:'Thon naturel boîte',cat:'P',unit:'g',per:30},{name:'Agneau',cat:'P',unit:'g',per:30},{name:'Porc',cat:'P',unit:'g',per:30},{name:'Maquereau',cat:'P',unit:'g',per:30},{name:'Sardine',cat:'P',unit:'g',per:30},{name:'Saumon',cat:'P',unit:'g',per:30},{name:'Thon frais',cat:'P',unit:'g',per:30},
+  {name:'Fromage blanc 0%',cat:'L',unit:'g',per:200},{name:'Fromage blanc 3%',cat:'L',unit:'g',per:100},{name:'Fromage à pâte dure',cat:'L',unit:'g',per:20},{name:'Mozzarella',cat:'L',unit:'g',per:30},{name:'Feta',cat:'L',unit:'g',per:30},{name:'Lait écrémé',cat:'L',unit:'ml',per:250},{name:'Lait demi-écrémé',cat:'L',unit:'ml',per:200},{name:'Lait concentré ½ écrémé',cat:'L',unit:'g',per:80},{name:'Petit suisse 0%',cat:'L',unit:'unité',per:3},{name:'Yaourt nature',cat:'L',unit:'unité',per:1},{name:'Yaourt allégé aux fruits',cat:'L',unit:'unité',per:1},{name:'Crème fraîche 5%',cat:'L',unit:'g',per:100},{name:'Cottage cheese',cat:'L',unit:'g',per:100},{name:'Cancoillotte',cat:'L',unit:'g',per:70},{name:'Ricotta',cat:'L',unit:'g',per:50},
+  {name:'Beurre',cat:'G',unit:'cc',per:1},{name:'Huile',cat:'G',unit:'cc',per:1},{name:'Margarine',cat:'G',unit:'cc',per:1},{name:'Mayonnaise',cat:'G',unit:'cc',per:1},{name:'Vinaigrette maison',cat:'G',unit:'cc',per:1.5},{name:'Chocolat (toute sorte)',cat:'G',unit:'g',per:7},{name:'Avocat',cat:'G',unit:'g',per:25},
+  {name:'Abricot',cat:'F',unit:'g',per:130},{name:'Ananas',cat:'F',unit:'g',per:100},{name:'Banane',cat:'F',unit:'g',per:80},{name:'Cerise',cat:'F',unit:'g',per:110},{name:'Clémentine',cat:'F',unit:'g',per:150},{name:'Fraise',cat:'F',unit:'g',per:150},{name:'Framboise',cat:'F',unit:'g',per:150},{name:'Kiwi',cat:'F',unit:'unité',per:1},{name:'Mangue',cat:'F',unit:'g',per:100},{name:'Melon',cat:'F',unit:'g',per:150},{name:'Orange',cat:'F',unit:'g',per:150},{name:'Pêche',cat:'F',unit:'g',per:130},{name:'Poire',cat:'F',unit:'g',per:130},{name:'Pomme',cat:'F',unit:'g',per:130},{name:'Raisin',cat:'F',unit:'g',per:100},{name:'Compote sans sucre',cat:'F',unit:'g',per:120},{name:'Fruits secs',cat:'F',unit:'g',per:20},
+  {name:'Pain',cat:'S',unit:'g',per:30},{name:'Biscottes',cat:'S',unit:'unité',per:2},{name:'Céréales',cat:'S',unit:'g',per:20},{name:'Farine',cat:'S',unit:'g',per:20},{name:'Maïzéna',cat:'S',unit:'g',per:20},{name:'Couscous cuit',cat:'S',unit:'g',per:80},{name:'Légumes secs cuits',cat:'S',unit:'g',per:80},{name:'Maïs cuit',cat:'S',unit:'g',per:100},{name:'Pâtes cuites',cat:'S',unit:'g',per:80},{name:'Pomme de terre',cat:'S',unit:'g',per:100},{name:'Riz cuit',cat:'S',unit:'g',per:80},{name:'Patate douce',cat:'S',unit:'g',per:80},
+  {name:'Salade verte',cat:'V',unit:'g',per:null},{name:'Tomate',cat:'V',unit:'g',per:null},{name:'Concombre',cat:'V',unit:'g',per:null},{name:'Courgette',cat:'V',unit:'g',per:null},{name:'Haricots verts',cat:'V',unit:'g',per:null},{name:'Brocoli',cat:'V',unit:'g',per:null},{name:'Champignons',cat:'V',unit:'g',per:null},{name:'Carottes',cat:'V',unit:'g',per:null},{name:'Épinards',cat:'V',unit:'g',per:null},{name:'Poivron',cat:'V',unit:'g',per:null},{name:'Légumes (autre)',cat:'V',unit:'g',per:null}
+];
+
+var EF=[{name:'Chocolat noir',kcal:550,unit:'g'},{name:'Chips',kcal:530,unit:'g'},{name:'Gâteau',kcal:400,unit:'g'},{name:'Pain au chocolat',kcal:400,unit:'unité'},{name:'Croissant',kcal:406,unit:'unité'},{name:'Verre de vin',kcal:102,unit:'verre'},{name:'Bière',kcal:140,unit:'canette'},{name:'Frites',kcal:312,unit:'g'},{name:'Glace',kcal:150,unit:'boule'},{name:'Soda',kcal:140,unit:'canette'},{name:'Autre (kcal)',kcal:1,unit:'kcal'}];
+
+var recipes=[
+  {id:1,cat:'plats',name:'Timbale de lotte',bilan:{P:2},ing:'4 œufs, 360g lotte, 80g lait concentré',prep:'Cuire lotte. Mélanger. Bain-marie 20mn Th.7/8.',note:'',_o:false},
+  {id:2,cat:'plats',name:'Gratin de fruits de mer',bilan:{P:3,L:0.5,S:0.5},ing:'600g poisson, légumes, 120g gruyère, 400ml lait, 40g maïzéna',prep:'Légumes vapeur + poisson. Béchamel + gruyère. Four Th.6/7 30mn.',note:'',_o:false},
+  {id:3,cat:'plats',name:'Cabillaud à la moutarde',bilan:{P:3},ing:'800g cabillaud, moutarde, vin blanc',prep:'Badigeonner moutarde. Tomates + vin. Four 20mn.',note:'',_o:false},
+  {id:4,cat:'plats',name:'Lapin aux pruneaux',bilan:{P:3.5,F:1},ing:'1kg lapin, 12 pruneaux, vin rouge',prep:'Mariner. Dorer. Cuire 45mn.',note:'3 ou 4P selon poids',_o:false},
+  {id:5,cat:'plats',name:'Lapin sauce piquante',bilan:{P:3.5},ing:'1kg lapin, vin blanc, crème allégée',prep:'Dorer + vin. Cuire 1h. Sauce.',note:'3 ou 4P selon poids',_o:false},
+  {id:6,cat:'plats',name:'Osso bucco',bilan:{P:3},ing:'1kg veau, tomates, légumes, vin blanc',prep:'Revenir. Légumes + vin. Mijoter 1h.',note:'',_o:false},
+  {id:7,cat:'plats',name:'Curry de veau',bilan:{P:3.5},ing:'1.5kg veau, oignons, tomates, curry, yaourt',prep:'Blondir. Dorer. Curry + yaourt. Mijoter 1h30.',note:'3 ou 4P selon poids',_o:false},
+  {id:8,cat:'plats',name:'Bœuf carottes',bilan:{P:3},ing:'500g paleron, 1kg carottes, champignons',prep:'Revenir. Légumes + vin. Mijoter 2h15.',note:'',_o:false},
+  {id:9,cat:'plats',name:'Poulet au citron',bilan:{P:3},ing:'1 poulet, 2 citrons, thym',prep:'Mariner 3-4h. Revenir. Cuire 45mn.',note:'P selon poids',_o:false},
+  {id:10,cat:'plats',name:'Flan de courgettes',bilan:{P:2},ing:'6 œufs, 6 courgettes, 2 oignons',prep:'Cuire légumes. Écraser. Mélanger œufs. Bain-marie 45mn.',note:'',_o:false},
+  {id:11,cat:'plats',name:'Pizza minceur',bilan:{P:3,G:2,S:1},ing:'80g farine, beurre, 240g jambon, 80g gruyère',prep:'Pâte. Garniture. Four 30mn Th.7.',note:'2G (1G si beurre allégé)',_o:false},
+  {id:12,cat:'plats',name:'Quiche sans pâte',bilan:{P:3,L:0.5,S:1},ing:'2 œufs, 200ml lait, 40g farine, 60g jambon, 60g gruyère',prep:'Mélanger. Four 45mn Th.6/7.',note:'',_o:false},
+  {id:13,cat:'plats',name:'Paupiettes de poisson',bilan:{P:3,S:1},ing:'4 filets limande, 40g gruyère, 4 pommes de terre',prep:'Rouler filets + gruyère. Micro-ondes 8mn.',note:'',_o:false},
+  {id:14,cat:'plats',name:'Rôti veau cidre et pommes',bilan:{P:3,F:1},ing:'600g rôti veau, 500g pommes, 30cl cidre',prep:'Dorer. Cidre. Mijoter 45mn.',note:'',_o:false},
+  {id:15,cat:'plats',name:'Gratin pommes de terre tomates',bilan:{P:2,G:2,S:1},ing:'200g pommes de terre, 600g tomates, fromages, huile',prep:'Couches légumes + fromages. Four 1h Th.5.',note:'',_o:false},
+  {id:16,cat:'plats',name:'Hachis parmentier',bilan:{P:4,L:0.5,S:1.5},ing:'100g pommes de terre, chou-fleur, lait, 60g steak haché',prep:'Purée + steak. Couches. Gruyère. Four 30mn.',note:'1 ou 2S selon quantité',_o:false},
+  {id:17,cat:'plats',name:'Saumon vapeur',bilan:{P:3},ing:'400g saumon, cresson, fromage blanc',prep:'Vapeur 6mn. Sauce fromage blanc.',note:'P selon poids',_o:false},
+  {id:18,cat:'plats',name:'Pâtes bolognaises',bilan:{P:3.5,S:1.5},ing:'160g pâtes, 100g steak haché, coulis tomates',prep:'Sauce. Verser sur pâtes.',note:'3-4P, 1-2S',_o:false},
+  {id:19,cat:'plats',name:'Colin en papillote',bilan:{P:3},ing:'4 tranches colin, herbes, jaunes d\'œufs',prep:'Chapelure herbes. Papillote. Four 30mn.',note:'P selon poids',_o:false},
+  {id:20,cat:'plats',name:'Soufflé champignons',bilan:{P:1.5},ing:'400g champignons, 4 œufs, 40g gruyère',prep:'Champignons + jaunes + gruyère. Blancs. Four 15mn.',note:'',_o:false},
+  {id:21,cat:'plats',name:'Soufflé épinards',bilan:{P:2.5},ing:'160g épinards, 8 œufs, 40g gruyère',prep:'Épinards + jaunes + gruyère. Blancs. Four 25mn.',note:'',_o:false},
+  {id:22,cat:'plats',name:'Courgettes à l\'orientale',bilan:{S:1},ing:'Courgettes, pommes de terre, tomates',prep:'Couches dans cocotte. Mijoter 1h.',note:'',_o:false},
+  {id:23,cat:'plats',name:'Filets de lotte vin blanc',bilan:{P:1.5},ing:'600g lotte, court-bouillon fenouil',prep:'Court-bouillon. Sauce fenouillette.',note:'1 ou 2P selon poids',_o:false},
+  {id:24,cat:'plats',name:'Poisson sauce citron',bilan:{P:2},ing:'4 filets poisson, moutarde, citrons',prep:'Pocher. Sauce moutarde + citron.',note:'',_o:false},
+  {id:25,cat:'plats',name:'Tomates aux œufs',bilan:{P:2},ing:'800g tomates, 8 œufs, estragon',prep:'Évider. Farcir. Four 30mn.',note:'',_o:false},
+  {id:30,cat:'sauces',name:'Sauce vinaigrette minceur',bilan:{G:1},ing:'Huile, vinaigre, moutarde, fécule',prep:'5 càc = 1 mat. grasse.',note:'5 càc = 1G',_o:false},
+  {id:31,cat:'sauces',name:'Sauce persil (yaourt)',bilan:{L:1},ing:'1 yaourt, moutarde, persil',prep:'Mélanger.',note:'',_o:false},
+  {id:32,cat:'sauces',name:'Sauce rose (yaourt)',bilan:{L:0.5},ing:'Yaourt, coulis tomate',prep:'Mélanger.',note:'',_o:false},
+  {id:33,cat:'sauces',name:'Sauce ail (yaourt)',bilan:{L:0.5},ing:'1 yaourt, ail, paprika',prep:'Ail + yaourt.',note:'',_o:false},
+  {id:34,cat:'sauces',name:'Sauce moutarde (yaourt)',bilan:{L:1},ing:'1 yaourt, moutarde forte',prep:'Fouetter.',note:'',_o:false},
+  {id:35,cat:'sauces',name:'Sauce tomate',bilan:{},ing:'Tomates pelées, ail',prep:'Cuire 20mn. Mixer.',note:'0 case',_o:false},
+  {id:36,cat:'sauces',name:'Sauce aux oignons',bilan:{},ing:'500g oignons, eau',prep:'Revenir. Mixer.',note:'0 case',_o:false},
+  {id:37,cat:'sauces',name:'Sauce basilic',bilan:{G:1},ing:'Jus tomate, huile d\'olive, basilic',prep:'Fouetter.',note:'',_o:false},
+  {id:38,cat:'sauces',name:'Sauce concombre',bilan:{L:1,G:1},ing:'Concombre, yaourts, huile',prep:'Râper. Mixer.',note:'',_o:false},
+  {id:39,cat:'sauces',name:'Sauce crudités (fb)',bilan:{L:1},ing:'Fromage blanc, moutarde, vinaigre',prep:'Fouetter.',note:'',_o:false},
+  {id:40,cat:'sauces',name:'Sauce échalote',bilan:{P:0.5,L:0.5,G:1},ing:'Beurre, échalotes, jaune d\'œuf, lait',prep:'Fouetter.',note:'',_o:false},
+  {id:41,cat:'sauces',name:'Sauce au fromage',bilan:{P:0.5,L:1,G:1},ing:'Beurre, échalotes, jaune, lait, gruyère',prep:'Velouté + gruyère.',note:'',_o:false},
+  {id:42,cat:'sauces',name:'Sauce curry (fb)',bilan:{L:1},ing:'Fromage blanc, curry',prep:'Curry + fromage blanc.',note:'',_o:false},
+  {id:43,cat:'sauces',name:'Sauce plumetis',bilan:{P:1,L:1},ing:'Yaourt, citron, œufs de lump',prep:'Fouetter.',note:'',_o:false},
+  {id:44,cat:'sauces',name:'Sauce fenouillette',bilan:{P:0.5},ing:'Court-bouillon fenouil, maïzena, fb',prep:'Délayer.',note:'',_o:false},
+  {id:45,cat:'sauces',name:'Sauce maraîchère',bilan:{L:1},ing:'Jus tomate, concombre, fromage faisselle',prep:'Mixer.',note:'',_o:false},
+  {id:46,cat:'sauces',name:'Sauce au céleri',bilan:{P:1,L:1},ing:'Céleri-rave, cornichons, yaourt',prep:'Mixer.',note:'',_o:false},
+  {id:47,cat:'sauces',name:'Sauce cocktail',bilan:{L:0.5},ing:'Fromage blanc, moutarde, ketchup',prep:'Fouetter.',note:'',_o:false},
+  {id:48,cat:'sauces',name:'Sauce au homard',bilan:{L:1,S:1},ing:'Bisque homard, fromage blanc',prep:'Mélanger.',note:'',_o:false},
+  {id:49,cat:'sauces',name:'Sauce artichaut',bilan:{L:1},ing:'Fromage blanc, fonds d\'artichaut',prep:'Mixer.',note:'',_o:false},
+  {id:70,cat:'sauces',name:'Sauce champignon',bilan:{L:0.5},ing:'Champignons, lait, bouillon',prep:'Hacher. Macérer.',note:'',_o:false},
+  {id:50,cat:'desserts',name:'Petits pots crème orange',bilan:{P:0.5,L:1,F:1},ing:'4 oranges, 400ml lait, 2 œufs',prep:'Zestes + lait + œufs. Bain-marie 1h.',note:'',_o:false},
+  {id:51,cat:'desserts',name:'Pommes Tante Lucie',bilan:{F:1.5},ing:'4 pommes, 100g raisin blanc',prep:'Vider pommes. Farcir raisin. Four 45mn.',note:'',_o:false},
+  {id:52,cat:'desserts',name:'Perles de melon fraises',bilan:{F:2.5},ing:'600g melon, 300g fraises',prep:'Billes melon. Coulis fraises.',note:'',_o:false},
+  {id:53,cat:'desserts',name:'Grosse crêpe abricots',bilan:{P:1,L:0.5,G:1,F:1,S:1},ing:'20g farine, 1 œuf, lait, huile, abricots secs',prep:'Mélanger. Reposer 15mn. Cuire.',note:'',_o:false},
+  {id:54,cat:'desserts',name:'Sorbet fruits d\'été',bilan:{F:1.5},ing:'800g fruits, édulcorant',prep:'Mixer. Sorbetière 2-3h.',note:'1 ou 2F',_o:false},
+  {id:55,cat:'desserts',name:'Sorbet cassis',bilan:{F:1.5},ing:'600g cassis, eau',prep:'Jus + eau. Sorbetière 1h30.',note:'1 ou 2F',_o:false},
+  {id:56,cat:'desserts',name:'Glace express',bilan:{L:1,F:1},ing:'Lait concentré, 150g fraises surgelées',prep:'Mixer. Consommer immédiatement.',note:'',_o:false},
+  {id:57,cat:'desserts',name:'Gâteau aux pommes',bilan:{P:0.5,F:1,S:1},ing:'1 yaourt, 80g farine, 1 œuf, 400g pommes',prep:'Mélanger. Pommes. Four 20mn.',note:'',_o:false},
+  {id:58,cat:'desserts',name:'Clafoutis cerises',bilan:{P:1,F:1,S:1},ing:'400g cerises, 3 œufs, lait, 80g farine',prep:'Pâte. Cerises. Four 30-35mn.',note:'',_o:false},
+  {id:59,cat:'desserts',name:'Milk-shake fraises',bilan:{L:2,F:1},ing:'150g fraises, fromage blanc, 25cl lait',prep:'Mixer. Servir immédiatement.',note:'',_o:false},
+  {id:60,cat:'desserts',name:'Milk-shake banane',bilan:{L:2,F:2},ing:'1 banane, fromage blanc, 25cl lait',prep:'Mixer. Servir immédiatement.',note:'',_o:false}
+];
+
+var RCAT=[{key:'plats',label:'Plats',e:'🍲'},{key:'sauces',label:'Sauces',e:'🥣'},{key:'desserts',label:'Desserts',e:'🍮'},{key:'mes',label:'Mes recettes',e:'📒'}];
+var curRecCat=null,newRecId=300;
+
+// ═══════════════════════════════════════
+// PERSISTANCE localStorage
+// ═══════════════════════════════════════
+var SAVE_KEY = 'gladder_v1';
+
+function saveData() {
+  try {
+    var data = {
+      daymap: daymap,
+      recipes_custom: recipes.filter(function(r){ return r.id >= 300; }),
+      saved_at: Date.now()
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch(e) { /* quota exceeded, ignore */ }
+}
+
+function loadData() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    // Restore daymap
+    if (data.daymap) {
+      var keys = Object.keys(data.daymap);
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var d = data.daymap[k];
+        // Restore meals with all fields
+        if (d.meals) {
+          for (var mi = 0; mi < d.meals.length; mi++) {
+            var meal = d.meals[mi];
+            // Ensure transient UI fields are reset
+            meal.open = false;
+            meal.sf = null;
+            meal.sr = null;
+            meal.sv = '';
+          }
+        }
+        daymap[k] = d;
+      }
+    }
+    // Restore custom recipes
+    if (data.recipes_custom && data.recipes_custom.length > 0) {
+      for (var ri = 0; ri < data.recipes_custom.length; ri++) {
+        recipes.push(data.recipes_custom[ri]);
+        if (data.recipes_custom[ri].id >= newRecId) {
+          newRecId = data.recipes_custom[ri].id + 1;
+        }
+      }
+    }
+  } catch(e) { /* corrupted data, ignore */ }
+}
+
+
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function saAll(q){
+  var nq=nrm(q);
+  var fs=FOODS.filter(function(f){return nrm(f.name).startsWith(nq);})
+    .concat(FOODS.filter(function(f){return nrm(f.name).includes(nq)&&!nrm(f.name).startsWith(nq);}))
+    .slice(0,7).map(function(f){return{name:f.name,cat:f.cat,unit:f.unit,per:f.per,_t:'food'};});
+  var rs=recipes.filter(function(r){return nrm(r.name).startsWith(nq);})
+    .concat(recipes.filter(function(r){return nrm(r.name).includes(nq)&&!nrm(r.name).startsWith(nq);}))
+    .slice(0,4).map(function(r){return{id:r.id,name:r.name,cat:r.cat,bilan:r.bilan,note:r.note,_t:'rec'};});
+  return fs.concat(rs).slice(0,12);
+}
+
+var TODAY=new Date();TODAY.setHours(0,0,0,0);
+function dk(d){var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+day;}
+function dfk(k){var p=k.split('-').map(Number);var r=new Date(p[0],p[1]-1,p[2]);r.setHours(0,0,0,0);return r;}
+function addD(d,n){var r=new Date(d);r.setDate(r.getDate()+n);r.setHours(0,0,0,0);return r;}
+function getMon(d){var r=new Date(d);r.setHours(0,0,0,0);var day=r.getDay();r.setDate(r.getDate()+(day===0?-6:1-day));return r;}
+function wk(d){return dk(getMon(d));}
+function isPast(d){return dk(d)<dk(TODAY);}
+function fc(c){var r=Math.round(c*10)/10;return r+' case'+(r!==1?'s':'');}
+function bsS(b){var p=Object.keys(b||{}).filter(function(k){return b[k]>0;}).map(function(k){return b[k]+k;});return p.length?p.join(' '):'-';}
+function bsL(b){var p=Object.keys(b||{}).filter(function(k){return b[k]>0;}).map(function(k){return b[k]+' case'+(b[k]>1?'s':'')+' '+CL[k];});return p.length?p.join(', '):'Aucune case';}
+
+// ═══════════════════════════════════════
+// ÉTAT
+// ═══════════════════════════════════════
+var cur=new Date(TODAY),wOff=0,daymap={},idc=0,editId=null;
+var gac=document.getElementById('gac'),gacM=[],gacMi=null,eacM=[];
+
+function getDay(d){
+  var k=dk(d);
+  if(!daymap[k]){daymap[k]={meals:MDEF.map(function(m){return{name:m.name,sub:m.sub,coll:m.coll,il:m.il,entries:[],open:false,sf:null,sr:null,sv:''};}),con:{P:0,L:0,G:0,F:0,S:0},ec:[],eco:false,ecm:'libre',ecf:null};}
+  return daymap[k];
+}
+function getQuota(d){
+  var q={P:BQ.P,L:BQ.L,G:BQ.G,F:BQ.F,S:BQ.S},tk=dk(d);
+  var keys=Object.keys(daymap).sort().filter(function(k){return k<tk&&isPast(dfk(k));});
+  for(var ci=0;ci<CARRY.length;ci++){var cat=CARRY[ci],carry=0;for(var ki=0;ki<keys.length;ki++)carry=Math.max(0,BQ[cat]+carry-(daymap[keys[ki]].con[cat]||0));q[cat]=BQ[cat]+carry;}
+  return q;
+}
+function getWEB(d){
+  var wk2=wk(d),wks=[],seen={};
+  Object.keys(daymap).forEach(function(k){var w=dk(getMon(dfk(k)));if(!seen[w]){seen[w]=true;wks.push(w);}});
+  wks.sort();var carry=0;
+  for(var i=0;i<wks.length;i++){var w=wks[i];if(w>=wk2)break;var wm=dfk(w);if(!isPast(addD(wm,6)))break;carry=Math.max(0,EB+carry-getWEU(w));}
+  return EB+carry;
+}
+function getWEU(wm){var t=0;for(var i=0;i<7;i++){var k=dk(addD(dfk(wm),i));if(daymap[k])t+=daymap[k].ec.reduce(function(s,e){return s+e.kcal;},0);}return Math.round(t);}
+
+// ═══════════════════════════════════════
+// DROPDOWN
+// ═══════════════════════════════════════
+function posDrop(el){
+  var r=el.getBoundingClientRect(),sb=window.innerHeight-r.bottom-8,sa=r.top-8,mh=Math.min(230,Math.max(sb,sa));
+  gac.style.width=r.width+'px';gac.style.left=r.left+'px';gac.style.maxHeight=mh+'px';
+  if(sb>=120||sb>=sa){gac.style.top=(r.bottom+4)+'px';gac.style.bottom='auto';}
+  else{gac.style.bottom=(window.innerHeight-r.top+4)+'px';gac.style.top='auto';}
+}
+function showDrop(mi,m,el){
+  gacMi=mi;gacM=m;
+  gac.innerHTML=m.map(function(x,i){
+    if(x._t==='rec'){var bs=bsS(x.bilan);return'<div class="acrow" onmousedown="pickI('+i+')"><span>🍳 '+x.name+'</span><span class="artag">'+bs+'/part</span></div>';}
+    return'<div class="acrow" onmousedown="pickI('+i+')"><span>'+x.name+'</span><span class="actag" style="background:'+CV[x.cat]+'18;color:'+CV[x.cat]+';">'+CL[x.cat]+'</span></div>';
+  }).join('');
+  posDrop(el);gac.style.display='block';
+}
+function hideDrop(){gac.style.display='none';gacMi=null;}
+function pickI(i){
+  var x=gacM[i];if(!x||gacMi===null)return;
+  var meal=getDay(cur).meals[gacMi];
+  if(x._t==='rec'){meal.sr={recipe:x,parts:1};meal.sf=null;meal.sv='';}
+  else{meal.sf=x;meal.sr=null;meal.sv='';}
+  hideDrop();render();
+  if(x._t==='food'&&x.cat!=='V')setTimeout(function(){var q=document.getElementById('q-'+gacMi);if(q)q.focus();},40);
+}
+
+// ═══════════════════════════════════════
+// RENDER SEMAINE
+// ═══════════════════════════════════════
+function renderWeek(){
+  var bm=getMon(cur),dm=addD(bm,wOff*7),dn=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'],html='';
+  for(var i=0;i<7;i++){var d=addD(dm,i),act=dk(d)===dk(cur);html+='<div class="day-pill'+(act?' active':'')+'" onclick="selDay(\''+dk(d)+'\')"><span class="dabbr">'+dn[i]+'</span><span class="dnum">'+d.getDate()+'</span></div>';}
+  document.getElementById('wscroll').innerHTML=html;
+  document.getElementById('sumday').textContent=dk(cur)===dk(TODAY)?"Aujourd'hui":['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][cur.getDay()]+' '+cur.getDate();
+}
+function shiftW(dir){
+  wOff+=dir;var bm=getMon(TODAY),dm=addD(bm,wOff*7),ds=addD(dm,6);
+  if(dk(cur)<dk(dm)||dk(cur)>dk(ds))cur=new Date(dm);
+  loadData();getDay(cur);render();saveData();
+}
+
+// ═══════════════════════════════════════
+// RENDER SUMMARY
+// ═══════════════════════════════════════
+function catBlock(cat,day,q){
+  var m=CMETA[cat],used=day.con[cat]||0,max=q[cat],base=BQ[cat],total=Math.ceil(Math.max(used,max));
+  var boxes='';
+  for(var i=0;i<total;i++){
+    if(i+1>max){boxes+='<div class="box over" style="border-color:'+m.border+';color:'+m.color+';border-width:2px;"></div>';}
+    else{var ic=i+1>base,st=used>=i+1?'filled':used>=i+0.5?'half':'empty';boxes+='<div class="box '+st+(ic?' carry':'')+'" style="border-color:'+m.border+';color:'+m.color+';'+(st==='filled'?'background:'+m.color:'')+'"></div>';}
+  }
+  return '<div class="cat-block"><div class="cat-label"><span class="icon">'+m.icon+'</span>'+m.label+'</div><div class="boxes">'+boxes+'</div></div>';
+}
+function renderSummary(){
+  var day=getDay(cur),q=getQuota(cur);
+  document.getElementById('catsbox').innerHTML=
+    '<div class="cats-row">'+catBlock('P',day,q)+catBlock('L',day,q)+'</div>'+
+    '<div class="cats-row row2">'+catBlock('G',day,q)+catBlock('F',day,q)+catBlock('S',day,q)+'</div>';
+  var budget=getWEB(cur),used=getWEU(wk(cur)),over=Math.max(0,used-budget),pct=Math.min(100,Math.round(Math.min(used,budget)/budget*100)),carry=budget-EB;
+  var cTxt=carry>0?' <span style="font-size:10px;opacity:.6">(+'+carry+' rep.)</span>':'';
+  var oTxt=over>0?' <span style="color:#d97070;font-size:11px;">+'+over+' kcal dépassés</span>':'';
+  document.getElementById('ecartsbar').innerHTML=
+    '<div class="ecarts-info"><span class="label">Écarts semaine'+cTxt+'</span><span class="val">'+used+' / '+budget+' kcal'+oTxt+'</span></div>'+
+    '<div class="ecarts-track"><div class="ecarts-fill" style="width:'+pct+'%;background:'+(over>0?'#d97070':'#c8874a')+'"></div></div>';
+}
+
+// ═══════════════════════════════════════
+// RENDER REPAS
+// ═══════════════════════════════════════
+function renderMeals(){
+  var day=getDay(cur),html='';
+  for(var mi=0;mi<day.meals.length;mi++){
+    var meal=day.meals[mi],ehtml='';
+    for(var ei=0;ei<meal.entries.length;ei++){
+      var e=meal.entries[ei];
+      if(editId===e.id&&e._t!=='rec'){
+        ehtml+='<div class="edit-row"><div class="edot" style="background:'+CV[e.cat]+';"></div><span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+e.name+'</span><input type="number" id="eq-'+e.id+'" value="'+e.qty+'" min="0" step="any" style="width:60px;flex:0 0 60px;" onkeydown="if(event.key===\'Enter\')confEdit('+mi+','+e.id+')"/><span class="ulab">'+e.unit+'</span><button onclick="confEdit('+mi+','+e.id+')">OK</button><button class="del-btn" onclick="cancelEdit()">✕</button></div>';
+        continue;
+      }
+      if(e._t==='rec'){
+        var pl=e.parts+' part'+(e.parts>1?'s':'');
+        ehtml+='<div class="rec-entry"><div class="rec-entry-top"><div class="rec-entry-l"><div class="rdot"></div><span class="rec-entry-name">'+e.name+'</span><span class="rec-parts">'+pl+'</span></div><button class="del-btn" onclick="delE('+mi+','+e.id+')">✕</button></div><div class="rec-bilan-line">'+bsL(e.bilanTotal)+'</div></div>';
+        continue;
+      }
+      ehtml+='<div class="entry"><div class="entry-l"><div class="edot" style="background:'+CV[e.cat]+';"></div><span class="entry-name">'+e.name+'</span></div><div class="entry-r">'+
+        (e.cat==='V'?'<span style="color:#7bb89a;font-size:11px;">à volonté</span>':'<span class="entry-cases">'+fc(e.cases)+'</span><span class="entry-qty">'+e.qty+' '+e.unit+'</span>')+
+        (e.cat!=='V'?'<button class="edit-btn" onclick="startEdit('+e.id+')">✏</button>':'')+
+        '<button class="del-btn" onclick="delE('+mi+','+e.id+')">✕</button></div></div>';
+    }
+    var sf=meal.sf,sr=meal.sr,fs='';
+    if(meal.open){
+      if(sr){
+        var r2=sr.recipe,pts=sr.parts;
+        fs='<div class="recbox"><div class="recbox-name">🍳 '+r2.name+'</div><div class="recbox-bilan">'+bsL(r2.bilan)+' / part'+(r2.note?' · '+r2.note:'')+'</div><div class="recbox-row"><div class="parts-ctrl"><button class="pb" onmousedown="chgP('+mi+',-1)">−</button><span class="pval">'+pts+'</span><button class="pb" onmousedown="chgP('+mi+',1)">+</button><span class="plab">part'+(pts>1?'s':'')+'</span></div><button class="recadd-btn" onmousedown="addRecE('+mi+')">Ajouter</button></div></div>';
+      }else if(sf&&sf.cat==='V'){
+        fs='<div class="vegbox"><div><div style="font-size:13px;font-weight:600;color:#7bb89a;">'+sf.name+'</div><div style="font-size:11px;color:#a89890;margin-top:1px;">À volonté — pas de case</div></div><button class="vegadd" onclick="addVeg('+mi+')">+ Ajouter</button></div>';
+      }else if(sf){
+        fs='<div class="sfbar"><span class="sfname">'+sf.name+'</span><button class="sfclear" onclick="clearSF('+mi+')">✕</button></div><div class="hint-txt">1 case = '+sf.per+' '+sf.unit+'</div><div class="qty-wrap"><input type="number" placeholder="Quantité" min="0" step="any" id="q-'+mi+'" onkeydown="if(event.key===\'Enter\')addE('+mi+')"/><span class="ulab">'+sf.unit+'</span><button class="sub-btn" onclick="addE('+mi+')">Ajouter</button></div>';
+      }
+      html+='<div class="meal-card'+(meal.coll?' coll':'')+'"><div class="meal-top" onclick="togM('+mi+')"><div class="meal-left"><div class="meal-name">'+meal.name+'</div>'+(meal.sub?'<div class="meal-sub">'+meal.sub+'</div>':'')+'</div><div class="meal-emoji">'+meal.il+'</div></div>'+(meal.entries.length?'<div class="entries">'+ehtml+'</div>':'')+'<div class="meal-divider"></div><div class="add-form"><input class="fld" id="s-'+mi+'" type="text" placeholder="Aliment ou recette…" autocomplete="off" value="'+(sr?sr.recipe.name:sf?sf.name:(meal.sv||''))+'" oninput="onS('+mi+',this.value)" onfocus="onF('+mi+',this)"/>'+fs+'</div></div>';
+    }else{
+      html+='<div class="meal-card'+(meal.coll?' coll':'')+'"><div class="meal-top" onclick="togM('+mi+')"><div class="meal-left"><div class="meal-name">'+meal.name+'</div>'+(meal.sub?'<div class="meal-sub">'+meal.sub+'</div>':'')+'</div><div class="meal-emoji">'+meal.il+'</div></div>'+(meal.entries.length?'<div class="entries">'+ehtml+'</div>':'')+'<div class="meal-divider"></div><div class="meal-open-row" onclick="togM('+mi+')"><button class="add-btn">+ Ajouter</button></div></div>';
+    }
+  }
+  // Écarts
+  var day2=day,dk2=Math.round(day2.ec.reduce(function(s,e){return s+e.kcal;},0));
+  var eh2=day2.ec.map(function(e){return'<div class="entry"><div class="entry-l"><div class="edot" style="background:#d97070;"></div>'+e.name+'</div><div class="entry-r"><span style="color:#d97070;">'+Math.round(e.kcal)+' kcal</span><button class="del-btn" onclick="delEc('+e.id+')">✕</button></div></div>';}).join('');
+  var ecadd=day2.eco?
+    '<div class="add-form"><div class="etabs"><button class="etab'+(day2.ecm==='libre'?' on':'')+'" onclick="setEcm(\'libre\')">Saisie libre</button><button class="etab'+(day2.ecm==='aliment'?' on':'')+'" onclick="setEcm(\'aliment\')">Par aliment</button></div>'+
+    (day2.ecm==='libre'?'<input class="fld" type="text" id="elab" placeholder="Description…" style="margin-bottom:8px;"/><div class="qty-wrap"><input type="number" id="ekcal" placeholder="kcal" min="0" onkeydown="if(event.key===\'Enter\')addEcL()"/><span class="ulab">kcal</span><button class="sub-btn" style="background:rgba(217,112,112,.1);color:#d97070;border-color:rgba(217,112,112,.3);" onclick="addEcL()">Ajouter</button></div>':
+    '<input class="fld" type="text" id="esrch" placeholder="Chercher…" autocomplete="off" oninput="onEsrch(this.value)"/><div class="hint-txt" id="ehint"></div><div class="qty-wrap"><input type="number" id="eqty" placeholder="Qté" min="0" step="any" onkeydown="if(event.key===\'Enter\')addEcA()"/><span class="ulab" id="eunit"></span><button class="sub-btn" style="background:rgba(217,112,112,.1);color:#d97070;border-color:rgba(217,112,112,.3);" onclick="addEcA()">Ajouter</button></div>')+'</div>':
+    '<div class="meal-open-row" onclick="togEc()" style="cursor:pointer"><button class="add-btn red">+ Ajouter</button><span style="font-size:38px;margin-left:auto;">🍪</span></div>';
+  html+='<div class="meal-card ec-card"><div class="meal-top" onclick="togEc()"><div class="meal-left"><div class="meal-name" style="color:#c0392b">Écarts</div>'+(dk2>0?'<div style="font-size:11px;color:#d97070;">'+dk2+' kcal aujourd\'hui</div>':'')+'</div></div>'+(day2.ec.length?'<div class="entries">'+eh2+'</div>':'')+'<div class="meal-divider"></div>'+ecadd+'</div>';
+  document.getElementById('mealslist').innerHTML=html;
+  if(editId!==null)setTimeout(function(){var el=document.getElementById('eq-'+editId);if(el)el.focus();},30);
+}
+
+function render(){renderWeek();renderSummary();renderMeals();}
+
+// ═══════════════════════════════════════
+// ACTIONS JOURNAL
+// ═══════════════════════════════════════
+function selDay(k){cur=dfk(k);var tm=getMon(TODAY),sm=getMon(cur);wOff=Math.round((sm-tm)/(7*24*3600*1000));getDay(cur);render();}
+function togM(mi){var day=getDay(cur);day.meals[mi].open=!day.meals[mi].open;day.meals[mi].sf=null;day.meals[mi].sr=null;day.meals[mi].sv='';editId=null;hideDrop();render();saveData();if(day.meals[mi].open)setTimeout(function(){var el=document.getElementById('s-'+mi);if(el)el.focus();},60);}
+function togEc(){var day=getDay(cur);day.eco=!day.eco;render();saveData();}
+function setEcm(m){var day=getDay(cur);day.ecm=m;day.ecf=null;render();}
+function onF(mi,inp){var meal=getDay(cur).meals[mi];if(meal.sf||meal.sr)return;var sv=meal.sv||'';if(sv.length>=2){var m=saAll(sv);if(m.length)showDrop(mi,m,inp);}}
+function onS(mi,val){var meal=getDay(cur).meals[mi];meal.sv=val;meal.sf=null;meal.sr=null;var inp=document.getElementById('s-'+mi);if(val.length<2){hideDrop();return;}var m=saAll(val);if(!m.length){hideDrop();return;}showDrop(mi,m,inp);}
+function clearSF(mi){var meal=getDay(cur).meals[mi];meal.sf=null;meal.sr=null;meal.sv='';hideDrop();render();setTimeout(function(){var el=document.getElementById('s-'+mi);if(el)el.focus();},30);}
+function chgP(mi,d){var meal=getDay(cur).meals[mi];if(!meal.sr)return;meal.sr.parts=Math.max(1,meal.sr.parts+d);render();}
+function addRecE(mi){
+  var day=getDay(cur),meal=day.meals[mi],sr=meal.sr;if(!sr)return;
+  var r=sr.recipe,pts=sr.parts,bilanTotal={},keys=Object.keys(r.bilan||{});
+  for(var i=0;i<keys.length;i++){var k=keys[i],val=Math.round(r.bilan[k]*pts*100)/100;if(val>0){bilanTotal[k]=val;if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]+val)*1000)/1000;}}
+  meal.entries.push({id:idc++,_t:'rec',name:r.name,parts:pts,bilan:r.bilan,bilanTotal:bilanTotal,cases:0,cat:'recipe'});
+  meal.sr=null;meal.sf=null;meal.open=false;hideDrop();render();saveData();saveData();
+}
+function addVeg(mi){var day=getDay(cur),meal=day.meals[mi],sf=meal.sf;if(!sf)return;meal.entries.push({id:idc++,name:sf.name,cat:'V',unit:'',qty:0,cases:0});meal.sf=null;meal.open=false;hideDrop();render();}
+function addE(mi){
+  var day=getDay(cur),meal=day.meals[mi],sf=meal.sf;if(!sf)return;
+  if(sf.cat==='V'){addVeg(mi);return;}
+  var qty=parseFloat(document.getElementById('q-'+mi).value);if(!qty||qty<=0)return;
+  var cases=qty/sf.per;
+  meal.entries.push({id:idc++,name:sf.name,cat:sf.cat,unit:sf.unit,qty:qty,cases:cases,per:sf.per});
+  day.con[sf.cat]=Math.round((day.con[sf.cat]+cases)*1000)/1000;
+  meal.sf=null;meal.open=false;hideDrop();render();saveData();
+}
+function startEdit(id){editId=id;render();}
+function cancelEdit(){editId=null;render();}
+function confEdit(mi,id){
+  var inp=document.getElementById('eq-'+id);if(!inp)return;
+  var qty=parseFloat(inp.value);if(!qty||qty<=0){editId=null;render();return;}
+  var day=getDay(cur),e=null;
+  for(var i=0;i<day.meals[mi].entries.length;i++){if(day.meals[mi].entries[i].id===id){e=day.meals[mi].entries[i];break;}}
+  if(!e){editId=null;return;}
+  if(e.cat!=='V'&&e._t!=='rec'){day.con[e.cat]=Math.round((day.con[e.cat]-e.cases)*1000)/1000;e.cases=qty/(e.per||1);e.qty=qty;day.con[e.cat]=Math.round((day.con[e.cat]+e.cases)*1000)/1000;}
+  editId=null;render();saveData();
+}
+function delE(mi,id){
+  var day=getDay(cur),meal=day.meals[mi],e=null;
+  for(var i=0;i<meal.entries.length;i++){if(meal.entries[i].id===id){e=meal.entries[i];break;}}
+  if(!e)return;
+  if(e._t==='rec'){var bkeys=Object.keys(e.bilanTotal||{});for(var i=0;i<bkeys.length;i++){var k=bkeys[i];if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]-e.bilanTotal[k])*1000)/1000;}}
+  else if(e.cat!=='V'){day.con[e.cat]=Math.round((day.con[e.cat]-e.cases)*1000)/1000;}
+  meal.entries=meal.entries.filter(function(x){return x.id!==id;});if(editId===id)editId=null;render();saveData();
+}
+function onEsrch(val){
+  var inp=document.getElementById('esrch');if(!inp)return;getDay(cur).ecf=null;
+  if(val.length<2){hideDrop();return;}
+  var nv=nrm(val),m=EF.filter(function(f){return nrm(f.name).includes(nv);}).slice(0,8);
+  if(!m.length){hideDrop();return;}
+  eacM=m;gacMi='ec';
+  gac.innerHTML=m.map(function(f,i){return'<div class="acrow" onmousedown="pickEc('+i+')"><span>'+f.name+'</span><span style="font-size:11px;color:#a89890;">'+f.kcal+' kcal/'+f.unit+'</span></div>';}).join('');
+  posDrop(inp);gac.style.display='block';
+}
+function pickEc(i){var f=eacM[i];if(!f)return;getDay(cur).ecf=f;var el=document.getElementById('esrch');if(el)el.value=f.name;if(document.getElementById('ehint'))document.getElementById('ehint').textContent=f.kcal+' kcal / '+f.unit;if(document.getElementById('eunit'))document.getElementById('eunit').textContent=f.unit;hideDrop();setTimeout(function(){var el2=document.getElementById('eqty');if(el2)el2.focus();},30);}
+function addEcL(){var day=getDay(cur);var kcal=parseFloat(document.getElementById('ekcal').value);if(!kcal||kcal<=0)return;var lab=document.getElementById('elab').value.trim()||'Écart';day.ec.push({id:idc++,name:lab,kcal:kcal});day.eco=false;render();saveData();}
+function addEcA(){var day=getDay(cur),f=day.ecf;if(!f)return;var qty=parseFloat(document.getElementById('eqty').value);if(!qty||qty<=0)return;var kcal=(f.unit==='g'||f.unit==='ml')?f.kcal*qty/100:f.kcal*qty;day.ec.push({id:idc++,name:f.name+' ('+qty+' '+f.unit+')',kcal:Math.round(kcal)});day.eco=false;day.ecf=null;render();saveData();}
+function delEc(id){var day=getDay(cur);day.ec=day.ec.filter(function(e){return e.id!==id;});render();saveData();}
+
+document.addEventListener('mousedown',function(e){if(!e.target.closest('#gac')&&!e.target.closest('.fld'))hideDrop();});
+document.getElementById('scroll-area').addEventListener('scroll',function(){
+  if(gac.style.display==='block'&&gacMi!==null){
+    var mi=gacMi;
+    if(mi==='ec'){var inp=document.getElementById('esrch');if(inp)posDrop(inp);}
+    else{var inp2=document.getElementById('s-'+mi);if(inp2)posDrop(inp2);}
+  }
+},{passive:true});
+
+// ═══════════════════════════════════════
+// RÉFÉRENCE
+// ═══════════════════════════════════════
+var RCATLIST=[{key:'P',label:'Protéines',icon:'🐟',color:'#5c9fe8'},{key:'L',label:'Laitages',icon:'🥛',color:'#9e9b94'},{key:'G',label:'Matières grasses',icon:'🫒',color:'#7bb89a'},{key:'F',label:'Fruits',icon:'🍎',color:'#d97070'},{key:'S',label:'Féculents',icon:'🍞',color:'#c8874a'},{key:'V',label:'Légumes (à volonté)',icon:'🥦',color:'#7bb89a'}];
+var roOpen={};
+function renderRef(){
+  document.getElementById('refcats').innerHTML=RCATLIST.map(function(cat){
+    var items=FOODS.filter(function(f){return f.cat===cat.key;}),isO=roOpen[cat.key];
+    var ihtml=items.map(function(f){return'<div class="catitem"><span>'+f.name+'</span><span class="ciqty">'+(f.cat==='V'?'à volonté':f.per+' '+f.unit+' = 1 case')+'</span></div>';}).join('');
+    return'<div class="catsec"><div class="catheader" onclick="togRef(\''+cat.key+'\')"><div class="cathl"><span style="font-size:18px;">'+cat.icon+'</span><span style="font-size:14px;font-weight:600;color:'+cat.color+';">'+cat.label+'</span></div><span class="cchev'+(isO?' open':'')+'">▼</span></div><div class="catitems'+(isO?' open':'')+'">'+ihtml+'</div></div>';
+  }).join('');
+}
+function togRef(k){roOpen[k]=!roOpen[k];renderRef();}
+function onRefS(val){
+  var res=document.getElementById('refres'),cats=document.getElementById('refcats');
+  if(val.length<2){res.innerHTML='';cats.style.display='';return;}
+  var nv=nrm(val),matches=FOODS.filter(function(f){return nrm(f.name).includes(nv);});
+  if(!matches.length){res.innerHTML='<div style="font-size:13px;color:#a89890;padding:8px 0">Aucun résultat.</div>';cats.style.display='none';return;}
+  cats.style.display='none';
+  res.innerHTML=matches.map(function(f){var m2=CMETA[f.cat]||{color:'#7bb89a'};return'<div class="ref-result"><div style="font-size:14px;font-weight:600;margin-bottom:2px">'+f.name+' <span style="font-size:11px;font-weight:400;color:'+m2.color+';">'+(CL[f.cat]||'Légumes')+'</span></div><div style="font-size:13px;color:#7bb89a;">'+(f.cat==='V'?'À volonté, pas de case':f.per+' '+f.unit+' = 1 case')+'</div></div>';}).join('');
+}
+
+// ═══════════════════════════════════════
+// RECETTES
+// ═══════════════════════════════════════
+function renderRecHome(){
+  document.getElementById('recgrid').innerHTML=RCAT.map(function(c){
+    var cnt=recipes.filter(function(r){return r.cat===c.key;}).length;
+    return'<div class="rectile" onclick="showRecCat(\''+c.key+'\')"><div class="rtemoji">'+c.e+'</div><div class="rtlabel">'+c.label+'</div><div class="rtcount">'+cnt+' recette'+(cnt>1?'s':'')+'</div></div>';
+  }).join('');
+}
+function showRecHome(){curRecCat=null;document.getElementById('rechome').style.display='block';document.getElementById('reclistview').style.display='none';renderRecHome();}
+function showRecCat(k){
+  curRecCat=k;var cat=null;for(var i=0;i<RCAT.length;i++){if(RCAT[i].key===k){cat=RCAT[i];break;}}
+  document.getElementById('rlisttitle').textContent=cat?cat.label:'';
+  document.getElementById('rechome').style.display='none';
+  document.getElementById('reclistview').style.display='block';
+  document.getElementById('recaddinlist').style.display=k==='mes'?'block':'none';
+  renderRecList(k);
+}
+function renderRecList(k){
+  var list=recipes.filter(function(r){return r.cat===k;}),el=document.getElementById('rlistitems');
+  if(!list.length){el.innerHTML='<div style="font-size:13px;color:#a89890;padding:16px 0;text-align:center;">'+(k==='mes'?'Ajoutez vos propres recettes !':'Aucune recette.')+'</div>';return;}
+  el.innerHTML=list.map(function(r){var isOwn=r.id>=300;
+    return'<div class="rcard"><div class="rchdr" onclick="togRec('+r.id+')"><div style="flex:1"><div class="rcname">'+r.name+'</div><div class="rcbilan">Par part : '+bsL(r.bilan)+(r.note?' · <em>'+r.note+'</em>':'')+'</div></div><span style="font-size:12px;color:#a89890;flex-shrink:0;">'+(r._o?'▲':'▼')+'</span></div>'+
+    '<div class="rcbody'+(r._o?' open':'')+'"><div class="rst">Ingrédients</div><div class="ring">'+(r.ing||'—')+'</div>'+(r.prep?'<div class="rst">Préparation</div><div class="rprep">'+r.prep+'</div>':'')+(isOwn?'<button class="rdelbtn" onclick="delRec('+r.id+')">Supprimer</button>':'')+'</div></div>';
+  }).join('');
+}
+function togRec(id){for(var i=0;i<recipes.length;i++){if(recipes[i].id===id){recipes[i]._o=!recipes[i]._o;break;}}if(curRecCat)renderRecList(curRecCat);}
+function delRec(id){recipes=recipes.filter(function(r){return r.id!==id;});if(curRecCat)renderRecList(curRecCat);renderRecHome();saveData();}
+function openNewRec(){['bP','bL','bG','bF','bS'].forEach(function(id){document.getElementById(id).value='0';});document.getElementById('rname').value='';document.getElementById('ring').value='';document.getElementById('rprep').value='';document.getElementById('recmodal').classList.add('open');}
+function closeRecModal(e){if(!e||e.target===document.getElementById('recmodal'))document.getElementById('recmodal').classList.remove('open');}
+function saveRec(){
+  var name=document.getElementById('rname').value.trim();if(!name)return;
+  var cat=document.getElementById('rcat').value,bilan={};
+  ['P','L','G','F','S'].forEach(function(k){var v=parseFloat(document.getElementById('b'+k).value)||0;if(v>0)bilan[k]=v;});
+  var ing=document.getElementById('ring').value.trim(),prep=document.getElementById('rprep').value.trim();
+  recipes.push({id:newRecId++,cat:cat,name:name,bilan:bilan,ing:ing,prep:prep,note:'',_o:false});
+  document.getElementById('recmodal').classList.remove('open');renderRecHome();saveData();if(curRecCat)renderRecList(curRecCat);
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function switchTab(tab){
+  ['journal','ref','rec'].forEach(function(t){
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+    document.getElementById('page-'+t).classList.toggle('active',t===tab);
+  });
+  document.getElementById('scroll-area').scrollTop=0;
+  if(tab==='ref'){renderRef();document.getElementById('refres').innerHTML='';document.getElementById('refinput').value='';document.getElementById('refcats').style.display='';}
+  if(tab==='rec')showRecHome();
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+setTimeout(function(){
+  var s=document.getElementById('splash');
+  s.style.opacity='0';
+  setTimeout(function(){s.style.display='none';},400);
+},900);
+
+getDay(cur);render();
+
+// ═══════════════════════════════════════
+// EXPORT SEMAINIER XLSX
+// ═══════════════════════════════════════
+function exporterSemainier() {
+  // Charger SheetJS dynamiquement si pas encore chargé
+  if (typeof XLSX === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = function() { _genererXLSX(); };
+    s.onerror = function() { alert('Impossible de charger la bibliothèque Excel. Vérifiez votre connexion.'); };
+    document.head.appendChild(s);
+  } else {
+    _genererXLSX();
+  }
+}
+
+function _genererXLSX() {
+  var JOURS_FR = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  var JOUR_KEYS = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+  var REPAS_KEYS2 = ['pdej','coll_matin','dejeuner','coll_apm','diner','coll_soir'];
+  var REPAS_LBLS  = ['Petit déjeuner','Collation','Déjeuner','Collation','Dîner','Collation'];
+  var CATS_KEYS2  = ['P','L','G','V','F','S'];
+  var CATS_LBLS   = ['Protéines','Laitages','Matières grasses','Légumes','Fruits','Pain/féculents'];
+  var CATS_QUOTAS2= {P:6,L:3,G:3,V:null,F:3,S:4};
+
+  // Couleurs par catégorie (ARGB pour xlsx)
+  var CAT_BG = {P:'FFdbeafe',L:'FFf3f4f6',G:'FFdcfce7',V:'FFf0fdf4',F:'FFfee2e2',S:'FFfef9c3'};
+  var CAT_FG = {P:'FF3b82f6',L:'FF6b7280',G:'FF16a34a',V:'FF15803d',F:'FFdc2626',S:'FFca8a04'};
+
+  var PURPLE_HDR = 'FFc084a8';
+  var GREY_HDR   = 'FFd9d9d9';
+
+  function makeBoxes(used, quota) {
+    if (quota === null) return 'à volonté';
+    var s = '';
+    for (var i = 0; i < quota; i++) {
+      s += (i < used) ? '■' : '□';
+      if (i < quota - 1) s += ' ';
+    }
+    s += '  ' + used + '/' + quota;
+    return s;
+  }
+
+  function joinItems(items) {
+    return items && items.length ? items.join(' + ') : '';
+  }
+
+  // Déterminer la semaine courante
+  var bm = getMon(cur);
+  var ds = addD(bm, 6);
+  function fmtDate(d) {
+    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+  }
+  var weekLabel = 'du ' + fmtDate(bm) + ' au ' + fmtDate(ds);
+
+  var wb = XLSX.utils.book_new();
+  var wsData = [];
+
+  // Style helpers
+  function hdrStyle(bg) {
+    return {font:{bold:true,color:{rgb:'FFFFFFFF'}}, fill:{patternType:'solid',fgColor:{rgb:bg}}, alignment:{horizontal:'center',vertical:'center'}};
+  }
+  function catStyle(bgRgb, fgRgb) {
+    return {font:{bold:true,color:{rgb:fgRgb}}, fill:{patternType:'solid',fgColor:{rgb:bgRgb}}, alignment:{horizontal:'left',vertical:'center'}};
+  }
+  function boxStyle(bgRgb, fgRgb) {
+    return {font:{bold:true,color:{rgb:fgRgb}}, fill:{patternType:'solid',fgColor:{rgb:bgRgb}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  }
+  function cellStyle(bgRgb) {
+    return {font:{color:{rgb:'FF1a1410'}}, fill:{patternType:'solid',fgColor:{rgb:bgRgb}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  }
+  function whiteCellStyle() {
+    return {font:{color:{rgb:'FF1a1410'}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+  }
+  function ecartStyle() {
+    return {font:{bold:true,color:{rgb:'FFc0392b'}}, fill:{patternType:'solid',fgColor:{rgb:'FFffe8e8'}}, alignment:{horizontal:'center',vertical:'center'}};
+  }
+
+  var ws = {};
+  var rowNum = 1; // 1-indexed
+
+  // ── TITRE ──
+  var titleCell = XLSX.utils.encode_cell({r:0, c:0});
+  ws[titleCell] = {
+    v: 'Gladder — Semainier ' + weekLabel,
+    s: {font:{bold:true,size:12,color:{rgb:'FF7c3aed'}}, fill:{patternType:'solid',fgColor:{rgb:'FFf5f0f8'}}, alignment:{horizontal:'left',vertical:'center'}}
+  };
+  // Merge A1:H1
+  ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:7}}];
+  rowNum = 2;
+
+  for (var ji = 0; ji < JOURS_FR.length; ji++) {
+    var jour = JOURS_FR[ji];
+    var hdrRow = rowNum - 1; // 0-indexed pour SheetJS
+
+    // Chercher les données du jour dans daymap
+    // On cherche la date de ce jour dans la semaine courante
+    var jourDate = addD(bm, ji);
+    var jourKey = dk(jourDate);
+    var dayData = daymap[jourKey] || {meals:[], con:{P:0,L:0,G:0,F:0,S:0}, ec:[]};
+    var con = dayData.con || {};
+
+    // Reconstruire les données par repas × catégorie depuis les entries
+    var repasData = {};
+    REPAS_KEYS2.forEach(function(rk) { repasData[rk] = {P:[],L:[],G:[],V:[],F:[],S:[]}; });
+
+    // Les meals de Gladder : pdej=0, coll_matin=1, dejeuner=2, coll_apm=3, diner=4, coll_soir=5
+    if (dayData.meals) {
+      var mealIdxMap = {pdej:0, coll_matin:1, dejeuner:2, coll_apm:3, diner:4, coll_soir:5};
+      Object.keys(mealIdxMap).forEach(function(rk) {
+        var mi = mealIdxMap[rk];
+        var meal = dayData.meals[mi];
+        if (!meal || !meal.entries) return;
+        meal.entries.forEach(function(e) {
+          if (e._t === 'rec') {
+            // Recette : ajouter le nom dans chaque catégorie du bilan
+            var bilan = e.bilanTotal || e.bilan || {};
+            Object.keys(bilan).forEach(function(catK) {
+              if (bilan[catK] > 0 && repasData[rk][catK] !== undefined) {
+                repasData[rk][catK].push(e.parts + ' part' + (e.parts > 1 ? 's' : '') + ' ' + e.name);
+              }
+            });
+          } else if (e.cat && e.cat !== 'recipe') {
+            // Aliment normal
+            if (repasData[rk][e.cat] !== undefined) {
+              var txt = e.cat === 'V' ? e.name : e.qty + ' ' + e.unit + ' ' + e.name;
+              repasData[rk][e.cat].push(txt);
+            }
+          }
+        });
+      });
+    }
+
+    // — Header jour —
+    var hCols = [jour, '', 'Petit déjeuner', 'Collation', 'Déjeuner', 'Collation', 'Dîner', 'Collation'];
+    for (var c = 0; c < hCols.length; c++) {
+      var cellRef = XLSX.utils.encode_cell({r: hdrRow, c: c});
+      ws[cellRef] = {
+        v: hCols[c],
+        s: c === 0 ? {font:{bold:true,size:11,color:{rgb:'FFFFFFFF'}}, fill:{patternType:'solid',fgColor:{rgb:PURPLE_HDR}}, alignment:{horizontal:'left',vertical:'center'}}
+                   : {font:{bold:true,size:9,color:{rgb:'FFFFFFFF'}}, fill:{patternType:'solid',fgColor:{rgb:PURPLE_HDR}}, alignment:{horizontal:'center',vertical:'center'}}
+      };
+    }
+    ws['!merges'].push({s:{r:hdrRow,c:0}, e:{r:hdrRow,c:1}});
+    rowNum++;
+
+    // — Catégories —
+    for (var ci = 0; ci < CATS_KEYS2.length; ci++) {
+      var catKey = CATS_KEYS2[ci];
+      var catLbl = CATS_LBLS[ci];
+      var quota  = CATS_QUOTAS2[catKey];
+      var used   = (catKey !== 'V') ? (con[catKey] || 0) : 0;
+      var bgRgb  = CAT_BG[catKey];
+      var fgRgb  = CAT_FG[catKey];
+      var catRow = rowNum - 1;
+
+      // A : label
+      ws[XLSX.utils.encode_cell({r:catRow,c:0})] = {v: catLbl, s: catStyle(bgRgb, fgRgb)};
+      // B : cases visuelles
+      ws[XLSX.utils.encode_cell({r:catRow,c:1})] = {v: makeBoxes(used, quota), s: boxStyle(bgRgb, fgRgb)};
+      // C-H : contenu repas
+      for (var ri = 0; ri < REPAS_KEYS2.length; ri++) {
+        var rk = REPAS_KEYS2[ri];
+        var items = repasData[rk][catKey] || [];
+        var txt = joinItems(items);
+        var cr = XLSX.utils.encode_cell({r:catRow, c:2+ri});
+        ws[cr] = {v: txt || '', s: txt ? cellStyle(bgRgb) : whiteCellStyle()};
+      }
+      rowNum++;
+    }
+
+    // Ligne vide séparation
+    rowNum++;
+  }
+
+  // ── ÉCARTS ──
+  var ecRow = rowNum - 1;
+  var totalEc = 0;
+  for (var ji2 = 0; ji2 < JOURS_FR.length; ji2++) {
+    var jourDate2 = addD(bm, ji2);
+    var d2 = daymap[dk(jourDate2)];
+    if (d2) totalEc += d2.ec.reduce(function(s,e){return s+e.kcal;},0);
+  }
+  ws[XLSX.utils.encode_cell({r:ecRow,c:0})] = {v:'Écarts :', s: ecartStyle()};
+  ws[XLSX.utils.encode_cell({r:ecRow,c:1})] = {v: Math.round(totalEc) + ' / 500 kcal', s: ecartStyle()};
+  for (var ji3 = 0; ji3 < Math.min(6, JOURS_FR.length); ji3++) {
+    var jourDate3 = addD(bm, ji3);
+    var d3 = daymap[dk(jourDate3)];
+    var ec3 = d3 ? Math.round(d3.ec.reduce(function(s,e){return s+e.kcal;},0)) : 0;
+    ws[XLSX.utils.encode_cell({r:ecRow,c:2+ji3})] = {
+      v: ec3 > 0 ? JOURS_FR[ji3].slice(0,3)+' : '+ec3+' kcal' : '',
+      s: {font:{size:8,color:{rgb:ec3>0?'FFc0392b':'FF999999'}}, fill:{patternType:'solid',fgColor:{rgb:'FFffe8e8'}}, alignment:{horizontal:'center',vertical:'center'}}
+    };
+  }
+
+  // ── RANGE & DIMENSIONS ──
+  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:ecRow,c:7}});
+  ws['!cols'] = [
+    {wpx:140}, // A
+    {wpx:95},  // B  
+    {wpx:125}, // C
+    {wpx:70},  // D
+    {wpx:130}, // E
+    {wpx:80},  // F
+    {wpx:125}, // G
+    {wpx:80},  // H
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Semainier');
+  var filename = 'Gladder_semainier_' + fmtDate(bm).replace(/\//g,'-') + '.xlsx';
+  XLSX.writeFile(wb, filename);
+}
+
+</script>
