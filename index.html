@@ -532,7 +532,8 @@ var MDEF=[
   {name:'Collation matinale',sub:'(optionnelle)',coll:true,il:'🥣'},
   {name:'Déjeuner',sub:'',coll:false,il:'🥗'},
   {name:"Collation de l'après-midi",sub:'(optionnelle)',coll:true,il:'🍓'},
-  {name:'Dîner',sub:'',coll:false,il:'🍽'}
+  {name:'Dîner',sub:'',coll:false,il:'🍽'},
+  {name:'Collation du soir',sub:'(optionnelle)',coll:true,il:'🥤'}
 ];
 
 function nrm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0153/g,'oe').replace(/\u00e6/g,'ae');}
@@ -845,7 +846,8 @@ function renderMeals(){
         var r2=sr.recipe,pts=sr.parts;
         fs='<div class="recbox"><div class="recbox-name">🍳 '+r2.name+'</div><div class="recbox-bilan">'+bsL(r2.bilan)+' / part'+(r2.note?' · '+r2.note:'')+'</div><div class="recbox-row"><div class="parts-ctrl"><button class="pb" onmousedown="chgP('+mi+',-1)">−</button><span class="pval">'+pts+'</span><button class="pb" onmousedown="chgP('+mi+',1)">+</button><span class="plab">part'+(pts>1?'s':'')+'</span></div><button class="recadd-btn" onmousedown="addRecE('+mi+')">Ajouter</button></div></div>';
       }else if(sf&&sf.cat==='V'){
-        fs='<div class="vegbox"><div><div style="font-size:13px;font-weight:600;color:#7bb89a;">'+sf.name+'</div><div style="font-size:11px;color:#a89890;margin-top:1px;">À volonté — pas de case</div></div><button class="vegadd" onclick="addVeg('+mi+')">+ Ajouter</button></div>';
+        fs='<div class="vegbox"><div><div style="font-size:13px;font-weight:600;color:#7bb89a;">🥦 Légumes</div><div style="font-size:11px;color:#a89890;margin-top:1px;">Saisir librement, ex: tomates, salade, concombre</div></div></div>'
+          +'<div class="qty-wrap" style="margin-top:6px;"><input type="text" placeholder="Ex: tomates, salade, concombre" id="vq-'+mi+'" style="flex:1;font-size:13px;padding:9px 12px;border-radius:12px;border:1.5px solid var(--accent2);background:#f6fdf9;font-family:var(--font);outline:none;" onkeydown="if(event.key===\'Enter\')addVeg('+mi+')"/><button class="sub-btn" style="background:rgba(123,184,154,.15);border-color:var(--accent2);color:var(--green);" onclick="addVeg('+mi+')">Ajouter</button></div>';
       }else if(sf){
         fs='<div class="sfbar"><span class="sfname">'+sf.name+'</span><button class="sfclear" onclick="clearSF('+mi+')">✕</button></div><div class="hint-txt">1 case = '+sf.per+' '+sf.unit+'</div><div class="qty-wrap"><input type="number" placeholder="Quantité" min="0" step="any" id="q-'+mi+'" onkeydown="if(event.key===\'Enter\')addE('+mi+')"/><span class="ulab">'+sf.unit+'</span><button class="sub-btn" onclick="addE('+mi+')">Ajouter</button></div>';
       }
@@ -887,7 +889,14 @@ function addRecE(mi){
   meal.entries.push({id:idc++,_t:'rec',name:r.name,parts:pts,bilan:r.bilan,bilanTotal:bilanTotal,cases:0,cat:'recipe'});
   meal.sr=null;meal.sf=null;meal.open=false;hideDrop();render();saveData();saveData();
 }
-function addVeg(mi){var day=getDay(cur),meal=day.meals[mi],sf=meal.sf;if(!sf)return;meal.entries.push({id:idc++,name:sf.name,cat:'V',unit:'',qty:0,cases:0});meal.sf=null;meal.open=false;hideDrop();render();}
+function addVeg(mi){
+  var day=getDay(cur),meal=day.meals[mi];
+  var inp=document.getElementById('vq-'+mi);
+  var txt=inp?inp.value.trim():(meal.sf?meal.sf.name:'');
+  if(!txt)return;
+  meal.entries.push({id:idc++,name:txt,cat:'V',unit:'',qty:0,cases:0});
+  meal.sf=null;meal.open=false;hideDrop();render();saveData();
+}
 function addE(mi){
   var day=getDay(cur),meal=day.meals[mi],sf=meal.sf;if(!sf)return;
   if(sf.cat==='V'){addVeg(mi);return;}
@@ -1049,19 +1058,28 @@ function exporterSemainier() {
 
 function _genererXLSX() {
   var JOURS_FR = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-  var JOUR_KEYS = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
   var REPAS_KEYS2 = ['pdej','coll_matin','dejeuner','coll_apm','diner','coll_soir'];
-  var REPAS_LBLS  = ['Petit déjeuner','Collation','Déjeuner','Collation','Dîner','Collation'];
   var CATS_KEYS2  = ['P','L','G','V','F','S'];
   var CATS_LBLS   = ['Protéines','Laitages','Matières grasses','Légumes','Fruits','Pain/féculents'];
   var CATS_QUOTAS2= {P:6,L:3,G:3,V:null,F:3,S:4};
 
-  // Couleurs par catégorie (ARGB pour xlsx)
-  var CAT_BG = {P:'FFdbeafe',L:'FFf3f4f6',G:'FFdcfce7',V:'FFf0fdf4',F:'FFfee2e2',S:'FFfef9c3'};
-  var CAT_FG = {P:'FF3b82f6',L:'FF6b7280',G:'FF16a34a',V:'FF15803d',F:'FFdc2626',S:'FFca8a04'};
+  // Couleur pastel par jour (ARGB)
+  var JOUR_COLORS = [
+    'FFe8d5f5', // Lundi — violet pastel
+    'FFd5e8f5', // Mardi — bleu pastel
+    'FFd5f5e8', // Mercredi — vert pastel
+    'FFf5f0d5', // Jeudi — jaune pastel
+    'FFf5ddd5', // Vendredi — pêche pastel
+    'FFd5eef5', // Samedi — cyan pastel
+    'FFf5d5e8'  // Dimanche — rose pastel
+  ];
+  var JOUR_FG = [
+    'FF6a3d9a','FF1a6fa8','FF1a8a5a','FF8a7a1a','FF9a4a2a','FF1a6a8a','FF8a2a6a'
+  ];
 
-  var PURPLE_HDR = 'FFc084a8';
-  var GREY_HDR   = 'FFd9d9d9';
+  // Couleurs par catégorie
+  var CAT_BG = {P:'FFdbeafe',L:'FFf3f4f6',G:'FFdcfce7',V:'FFe8f8f0',F:'FFfee2e2',S:'FFfef9c3'};
+  var CAT_FG = {P:'FF3b82f6',L:'FF6b7280',G:'FF16a34a',V:'FF15803d',F:'FFdc2626',S:'FFca8a04'};
 
   function makeBoxes(used, quota) {
     if (quota === null) return 'à volonté';
@@ -1073,90 +1091,66 @@ function _genererXLSX() {
     s += '  ' + used + '/' + quota;
     return s;
   }
+  function joinItems(items) {return items&&items.length?items.join(' + '):'';}
 
-  function joinItems(items) {
-    return items && items.length ? items.join(' + ') : '';
-  }
+  var bm=getMon(cur), ds=addD(bm,6);
+  function fmtDate(d){return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();}
+  var weekLabel='du '+fmtDate(bm)+' au '+fmtDate(ds);
 
-  // Déterminer la semaine courante
-  var bm = getMon(cur);
-  var ds = addD(bm, 6);
-  function fmtDate(d) {
-    return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
-  }
-  var weekLabel = 'du ' + fmtDate(bm) + ' au ' + fmtDate(ds);
+  var wb=XLSX.utils.book_new();
 
-  var wb = XLSX.utils.book_new();
-  var wsData = [];
-
-  // Style helpers
-  function hdrStyle(bg) {
-    return {font:{bold:true,color:{rgb:'FFFFFFFF'}}, fill:{patternType:'solid',fgColor:{rgb:bg}}, alignment:{horizontal:'center',vertical:'center'}};
-  }
-  function catStyle(bgRgb, fgRgb) {
-    return {font:{bold:true,color:{rgb:fgRgb}}, fill:{patternType:'solid',fgColor:{rgb:bgRgb}}, alignment:{horizontal:'left',vertical:'center'}};
-  }
-  function boxStyle(bgRgb, fgRgb) {
-    return {font:{bold:true,color:{rgb:fgRgb}}, fill:{patternType:'solid',fgColor:{rgb:bgRgb}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}};
-  }
-  function cellStyle(bgRgb) {
-    return {font:{color:{rgb:'FF1a1410'}}, fill:{patternType:'solid',fgColor:{rgb:bgRgb}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}};
-  }
-  function whiteCellStyle() {
-    return {font:{color:{rgb:'FF1a1410'}}, alignment:{horizontal:'center',vertical:'center',wrapText:true}};
-  }
-  function ecartStyle() {
-    return {font:{bold:true,color:{rgb:'FFc0392b'}}, fill:{patternType:'solid',fgColor:{rgb:'FFffe8e8'}}, alignment:{horizontal:'center',vertical:'center'}};
+  function mkS(font,fill,align){
+    var s={};
+    if(font)s.font=font;
+    if(fill)s.fill={patternType:'solid',fgColor:{rgb:fill}};
+    if(align)s.alignment=align;
+    return s;
   }
 
-  var ws = {};
-  var rowNum = 1; // 1-indexed
+  var ws={};
+  ws['!merges']=[];
+  var rowNum=1;
 
-  // ── TITRE ──
-  var titleCell = XLSX.utils.encode_cell({r:0, c:0});
-  ws[titleCell] = {
-    v: 'Gladder — Semainier ' + weekLabel,
-    s: {font:{bold:true,size:12,color:{rgb:'FF7c3aed'}}, fill:{patternType:'solid',fgColor:{rgb:'FFf5f0f8'}}, alignment:{horizontal:'left',vertical:'center'}}
+  // Titre
+  ws[XLSX.utils.encode_cell({r:0,c:0})]={
+    v:'Gladder — Semainier '+weekLabel,
+    s:mkS({bold:true,size:13,color:{rgb:'FF5c2d8a'}},
+          'FFf0e8fa',
+          {horizontal:'left',vertical:'center'})
   };
-  // Merge A1:H1
-  ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:7}}];
-  rowNum = 2;
+  ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:7}});
+  rowNum=2;
 
-  for (var ji = 0; ji < JOURS_FR.length; ji++) {
-    var jour = JOURS_FR[ji];
-    var hdrRow = rowNum - 1; // 0-indexed pour SheetJS
+  for(var ji=0;ji<JOURS_FR.length;ji++){
+    var jour=JOURS_FR[ji];
+    var jourBg=JOUR_COLORS[ji];
+    var jourFg=JOUR_FG[ji];
+    var hdrRow=rowNum-1;
 
-    // Chercher les données du jour dans daymap
-    // On cherche la date de ce jour dans la semaine courante
-    var jourDate = addD(bm, ji);
-    var jourKey = dk(jourDate);
-    var dayData = daymap[jourKey] || {meals:[], con:{P:0,L:0,G:0,F:0,S:0}, ec:[]};
-    var con = dayData.con || {};
+    var jourDate=addD(bm,ji);
+    var jourKey=dk(jourDate);
+    var dayData=daymap[jourKey]||{meals:[],con:{P:0,L:0,G:0,F:0,S:0},ec:[]};
+    var con=dayData.con||{};
 
-    // Reconstruire les données par repas × catégorie depuis les entries
-    var repasData = {};
-    REPAS_KEYS2.forEach(function(rk) { repasData[rk] = {P:[],L:[],G:[],V:[],F:[],S:[]}; });
+    var repasData={};
+    REPAS_KEYS2.forEach(function(rk){repasData[rk]={P:[],L:[],G:[],V:[],F:[],S:[]};});
 
-    // Les meals de Gladder : pdej=0, coll_matin=1, dejeuner=2, coll_apm=3, diner=4, coll_soir=5
-    if (dayData.meals) {
-      var mealIdxMap = {pdej:0, coll_matin:1, dejeuner:2, coll_apm:3, diner:4, coll_soir:5};
-      Object.keys(mealIdxMap).forEach(function(rk) {
-        var mi = mealIdxMap[rk];
-        var meal = dayData.meals[mi];
-        if (!meal || !meal.entries) return;
-        meal.entries.forEach(function(e) {
-          if (e._t === 'rec') {
-            // Recette : ajouter le nom dans chaque catégorie du bilan
-            var bilan = e.bilanTotal || e.bilan || {};
-            Object.keys(bilan).forEach(function(catK) {
-              if (bilan[catK] > 0 && repasData[rk][catK] !== undefined) {
-                repasData[rk][catK].push(e.parts + ' part' + (e.parts > 1 ? 's' : '') + ' ' + e.name);
-              }
+    if(dayData.meals){
+      var mealIdxMap={pdej:0,coll_matin:1,dejeuner:2,coll_apm:3,diner:4,coll_soir:5};
+      Object.keys(mealIdxMap).forEach(function(rk){
+        var mi=mealIdxMap[rk];
+        var meal=dayData.meals[mi];
+        if(!meal||!meal.entries)return;
+        meal.entries.forEach(function(e){
+          if(e._t==='rec'){
+            var bilan=e.bilanTotal||e.bilan||{};
+            Object.keys(bilan).forEach(function(catK){
+              if(bilan[catK]>0&&repasData[rk][catK]!==undefined)
+                repasData[rk][catK].push(e.parts+'part '+(e.parts>1?'s ':'')+e.name);
             });
-          } else if (e.cat && e.cat !== 'recipe') {
-            // Aliment normal
-            if (repasData[rk][e.cat] !== undefined) {
-              var txt = e.cat === 'V' ? e.name : e.qty + ' ' + e.unit + ' ' + e.name;
+          }else if(e.cat&&e.cat!=='recipe'){
+            if(repasData[rk][e.cat]!==undefined){
+              var txt=e.cat==='V'?e.name:e.qty+' '+e.unit+' '+e.name;
               repasData[rk][e.cat].push(txt);
             }
           }
@@ -1164,84 +1158,86 @@ function _genererXLSX() {
       });
     }
 
-    // — Header jour —
-    var hCols = [jour, '', 'Petit déjeuner', 'Collation', 'Déjeuner', 'Collation', 'Dîner', 'Collation'];
-    for (var c = 0; c < hCols.length; c++) {
-      var cellRef = XLSX.utils.encode_cell({r: hdrRow, c: c});
-      ws[cellRef] = {
-        v: hCols[c],
-        s: c === 0 ? {font:{bold:true,size:11,color:{rgb:'FFFFFFFF'}}, fill:{patternType:'solid',fgColor:{rgb:PURPLE_HDR}}, alignment:{horizontal:'left',vertical:'center'}}
-                   : {font:{bold:true,size:9,color:{rgb:'FFFFFFFF'}}, fill:{patternType:'solid',fgColor:{rgb:PURPLE_HDR}}, alignment:{horizontal:'center',vertical:'center'}}
+    // Header jour — couleur du jour, gras
+    var hCols=[jour,'','Petit-déjeuner','Collation','Déjeuner','Collation','Dîner','Collation soir'];
+    for(var c=0;c<hCols.length;c++){
+      var cr=XLSX.utils.encode_cell({r:hdrRow,c:c});
+      ws[cr]={
+        v:hCols[c],
+        s:mkS(
+          {bold:true,size:c===0?12:9,color:{rgb:'FFFFFFFF'}},
+          jourBg.replace('FF','FF').replace(/^FF/,''),// on utilise jourBg directement
+          {horizontal:c===0?'left':'center',vertical:'center'}
+        )
       };
+      // forcer couleur de fond correcte
+      ws[cr].s.fill={patternType:'solid',fgColor:{rgb:jourBg}};
+      ws[cr].s.font.color={rgb:'FFFFFFFF'};
+      if(c===0)ws[cr].s.font.size=12;
     }
-    ws['!merges'].push({s:{r:hdrRow,c:0}, e:{r:hdrRow,c:1}});
+    ws['!merges'].push({s:{r:hdrRow,c:0},e:{r:hdrRow,c:1}});
     rowNum++;
 
-    // — Catégories —
-    for (var ci = 0; ci < CATS_KEYS2.length; ci++) {
-      var catKey = CATS_KEYS2[ci];
-      var catLbl = CATS_LBLS[ci];
-      var quota  = CATS_QUOTAS2[catKey];
-      var used   = (catKey !== 'V') ? (con[catKey] || 0) : 0;
-      var bgRgb  = CAT_BG[catKey];
-      var fgRgb  = CAT_FG[catKey];
-      var catRow = rowNum - 1;
+    // Lignes catégories
+    for(var ci=0;ci<CATS_KEYS2.length;ci++){
+      var catKey=CATS_KEYS2[ci];
+      var catLbl=CATS_LBLS[ci];
+      var quota=CATS_QUOTAS2[catKey];
+      var used=(catKey!=='V')?(con[catKey]||0):0;
+      var bgRgb=CAT_BG[catKey];
+      var fgRgb=CAT_FG[catKey];
+      var catRow=rowNum-1;
 
-      // A : label
-      ws[XLSX.utils.encode_cell({r:catRow,c:0})] = {v: catLbl, s: catStyle(bgRgb, fgRgb)};
-      // B : cases visuelles
-      ws[XLSX.utils.encode_cell({r:catRow,c:1})] = {v: makeBoxes(used, quota), s: boxStyle(bgRgb, fgRgb)};
-      // C-H : contenu repas
-      for (var ri = 0; ri < REPAS_KEYS2.length; ri++) {
-        var rk = REPAS_KEYS2[ri];
-        var items = repasData[rk][catKey] || [];
-        var txt = joinItems(items);
-        var cr = XLSX.utils.encode_cell({r:catRow, c:2+ri});
-        ws[cr] = {v: txt || '', s: txt ? cellStyle(bgRgb) : whiteCellStyle()};
+      ws[XLSX.utils.encode_cell({r:catRow,c:0})]={
+        v:catLbl,
+        s:mkS({bold:true,color:{rgb:fgRgb}},bgRgb,{horizontal:'left',vertical:'center'})
+      };
+      ws[XLSX.utils.encode_cell({r:catRow,c:1})]={
+        v:makeBoxes(used,quota),
+        s:mkS({bold:true,color:{rgb:fgRgb}},bgRgb,{horizontal:'center',vertical:'center',wrapText:true})
+      };
+      for(var ri=0;ri<REPAS_KEYS2.length;ri++){
+        var rk=REPAS_KEYS2[ri];
+        var items=repasData[rk][catKey]||[];
+        var txt=joinItems(items);
+        var cellr=XLSX.utils.encode_cell({r:catRow,c:2+ri});
+        ws[cellr]={
+          v:txt||'',
+          s:txt
+            ?mkS({color:{rgb:'FF1a1410'}},bgRgb,{horizontal:'center',vertical:'center',wrapText:true})
+            :mkS({color:{rgb:'FF1a1410'}},null,{horizontal:'center',vertical:'center',wrapText:true})
+        };
       }
       rowNum++;
     }
-
-    // Ligne vide séparation
-    rowNum++;
+    rowNum++; // ligne vide
   }
 
-  // ── ÉCARTS ──
-  var ecRow = rowNum - 1;
-  var totalEc = 0;
-  for (var ji2 = 0; ji2 < JOURS_FR.length; ji2++) {
-    var jourDate2 = addD(bm, ji2);
-    var d2 = daymap[dk(jourDate2)];
-    if (d2) totalEc += d2.ec.reduce(function(s,e){return s+e.kcal;},0);
+  // Écarts
+  var ecRow=rowNum-1;
+  var totalEc=0;
+  for(var ji2=0;ji2<JOURS_FR.length;ji2++){
+    var d2=daymap[dk(addD(bm,ji2))];
+    if(d2)totalEc+=d2.ec.reduce(function(s,e){return s+e.kcal;},0);
   }
-  ws[XLSX.utils.encode_cell({r:ecRow,c:0})] = {v:'Écarts :', s: ecartStyle()};
-  ws[XLSX.utils.encode_cell({r:ecRow,c:1})] = {v: Math.round(totalEc) + ' / 500 kcal', s: ecartStyle()};
-  for (var ji3 = 0; ji3 < Math.min(6, JOURS_FR.length); ji3++) {
-    var jourDate3 = addD(bm, ji3);
-    var d3 = daymap[dk(jourDate3)];
-    var ec3 = d3 ? Math.round(d3.ec.reduce(function(s,e){return s+e.kcal;},0)) : 0;
-    ws[XLSX.utils.encode_cell({r:ecRow,c:2+ji3})] = {
-      v: ec3 > 0 ? JOURS_FR[ji3].slice(0,3)+' : '+ec3+' kcal' : '',
-      s: {font:{size:8,color:{rgb:ec3>0?'FFc0392b':'FF999999'}}, fill:{patternType:'solid',fgColor:{rgb:'FFffe8e8'}}, alignment:{horizontal:'center',vertical:'center'}}
+  ws[XLSX.utils.encode_cell({r:ecRow,c:0})]={v:'Écarts :',s:mkS({bold:true,color:{rgb:'FFc0392b'}},'FFffe8e8',{horizontal:'center',vertical:'center'})};
+  ws[XLSX.utils.encode_cell({r:ecRow,c:1})]={v:Math.round(totalEc)+' / 500 kcal',s:mkS({bold:true,color:{rgb:'FFc0392b'}},'FFffe8e8',{horizontal:'center',vertical:'center'})};
+  for(var ji3=0;ji3<Math.min(6,JOURS_FR.length);ji3++){
+    var d3=daymap[dk(addD(bm,ji3))];
+    var ec3=d3?Math.round(d3.ec.reduce(function(s,e){return s+e.kcal;},0)):0;
+    ws[XLSX.utils.encode_cell({r:ecRow,c:2+ji3})]={
+      v:ec3>0?JOURS_FR[ji3].slice(0,3)+' : '+ec3+' kcal':'',
+      s:mkS({size:8,color:{rgb:ec3>0?'FFc0392b':'FF999999'}},'FFffe8e8',{horizontal:'center',vertical:'center'})
     };
   }
 
-  // ── RANGE & DIMENSIONS ──
-  ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:ecRow,c:7}});
-  ws['!cols'] = [
-    {wpx:140}, // A
-    {wpx:95},  // B  
-    {wpx:125}, // C
-    {wpx:70},  // D
-    {wpx:130}, // E
-    {wpx:80},  // F
-    {wpx:125}, // G
-    {wpx:80},  // H
-  ];
+  ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:ecRow,c:7}});
+  ws['!cols']=[{wpx:140},{wpx:95},{wpx:125},{wpx:70},{wpx:130},{wpx:80},{wpx:125},{wpx:80}];
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Semainier');
-  var filename = 'Gladder_semainier_' + fmtDate(bm).replace(/\//g,'-') + '.xlsx';
-  XLSX.writeFile(wb, filename);
+  XLSX.utils.book_append_sheet(wb,ws,'Semainier');
+  var filename='Gladder_semainier_'+fmtDate(bm).replace(/\//g,'-')+'.xlsx';
+  XLSX.writeFile(wb,filename);
 }
+
 
 </script>
