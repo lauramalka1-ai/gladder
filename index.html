@@ -310,8 +310,8 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 .rcbody.open{display:block;}
 .rst{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 3px;}
 .rst:first-child{margin-top:0;}
-.ring{font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-wrap:break-word;}
-.rprep{font-size:12px;color:var(--text3);line-height:1.7;white-space:pre-wrap;word-wrap:break-word;}
+.ring{font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+.rprep{font-size:12px;color:var(--text3);line-height:1.7;white-space:pre-wrap;word-break:break-word;}
 .rdelbtn{padding:7px 13px;background:none;border:1.5px solid #fdd5d5;border-radius:9px;font-size:12px;color:var(--red);cursor:pointer;margin-top:10px;font-family:var(--font);}
 
 /* ── BOTTOM NAV ── */
@@ -473,15 +473,15 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
       <div><div class="mlabel">🍎 Fruits</div><input class="minput" id="bF" type="number" min="0" step="0.5" value="0"/></div>
       <div><div class="mlabel">🍞 Féculents</div><input class="minput" id="bS" type="number" min="0" step="0.5" value="0"/></div>
     </div>
-    <div class="mlabel">Ingrédients <span style="color:var(--red);font-size:10px;">(obligatoires)</span></div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
+    <div class="mlabel">Ingrédients <span style="color:var(--red);font-size:10px;text-transform:none;">(obligatoires)</span></div>
+    <div style="display:flex;gap:6px;align-items:center;">
       <input class="minput" id="ringName" type="text" placeholder="Nom (ex: œuf)" style="flex:1;"/>
-      <input class="minput" id="ringQty" type="text" placeholder="Qté (ex: 2)" style="width:90px;"/>
-      <button onclick="addIng()" style="padding:10px 14px;background:rgba(123,184,154,.15);border:1.5px solid var(--accent2);border-radius:12px;color:var(--green);font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);">+</button>
+      <input class="minput" id="ringQty" type="text" placeholder="Qté (ex: 2)" style="width:85px;"/>
+      <button onclick="addIng()" style="padding:10px 12px;background:rgba(123,184,154,.15);border:1.5px solid var(--accent2);border-radius:12px;color:var(--green);font-weight:700;cursor:pointer;font-size:16px;line-height:1;">+</button>
     </div>
-    <div id="ingList" style="margin-bottom:12px;"></div>
+    <div id="ingList"></div>
     <div class="mlabel">Préparation (optionnel)</div>
-    <textarea class="mtxt" id="rprep" placeholder="Décrivez les étapes…"></textarea>
+    <textarea class="mtxt" id="rprep" placeholder="Décrivez les étapes de préparation…" style="min-height:90px;"></textarea>
     <div class="mactions">
       <button class="mcancel" onclick="closeRecModal()">Annuler</button>
       <button class="msave" onclick="saveRec()">Enregistrer</button>
@@ -552,38 +552,38 @@ var recipes=[
   {id:23,cat:'plats',name:'Filets de lotte vin blanc',bilan:{P:1.5},ing:'600g lotte, court-bouillon fenouil',prep:'Court-bouillon. Sauce fenouillette.',note:'1 ou 2P selon poids',_o:false},
   {id:24,cat:'plats',name:'Poisson sauce citron',bilan:{P:2},ing:'4 filets poisson, moutarde, citrons',prep:'Pocher. Sauce moutarde + citron.',note:'',_o:false},
   {id:25,cat:'plats',name:'Tomates aux œufs',bilan:{P:2},ing:'800g tomates, 8 œufs, estragon',prep:'Évider. Farcir. Four 30mn.',note:'',_o:false},
-  {id:30,cat:'sauces',name:'Sauce vinaigrette minceur',bilan:{G:1},ing:'Huile, vinaigre, moutarde, fécule',prep:'5 càc = 1 mat. grasse.',note:'5 càc = 1G',_o:false},
-  {id:31,cat:'sauces',name:'Sauce persil (yaourt)',bilan:{L:1},ing:'1 yaourt, moutarde, persil',prep:'Mélanger.',note:'',_o:false},
-  {id:32,cat:'sauces',name:'Sauce rose (yaourt)',bilan:{L:0.5},ing:'Yaourt, coulis tomate',prep:'Mélanger.',note:'',_o:false},
-  {id:33,cat:'sauces',name:'Sauce ail (yaourt)',bilan:{L:0.5},ing:'1 yaourt, ail, paprika',prep:'Ail + yaourt.',note:'',_o:false},
-  {id:34,cat:'sauces',name:'Sauce moutarde (yaourt)',bilan:{L:1},ing:'1 yaourt, moutarde forte',prep:'Fouetter.',note:'',_o:false},
-  {id:35,cat:'sauces',name:'Sauce tomate',bilan:{},ing:'Tomates pelées, ail',prep:'Cuire 20mn. Mixer.',note:'0 case',_o:false},
-  {id:36,cat:'sauces',name:'Sauce aux oignons',bilan:{},ing:'500g oignons, eau',prep:'Revenir. Mixer.',note:'0 case',_o:false},
-  {id:37,cat:'sauces',name:'Sauce basilic',bilan:{G:1},ing:'Jus tomate, huile d\'olive, basilic',prep:'Fouetter.',note:'',_o:false},
-  {id:38,cat:'sauces',name:'Sauce concombre',bilan:{L:1,G:1},ing:'Concombre, yaourts, huile',prep:'Râper. Mixer.',note:'',_o:false},
-  {id:39,cat:'sauces',name:'Sauce crudités (fb)',bilan:{L:1},ing:'Fromage blanc, moutarde, vinaigre',prep:'Fouetter.',note:'',_o:false},
-  {id:40,cat:'sauces',name:'Sauce échalote',bilan:{P:0.5,L:0.5,G:1},ing:'Beurre, échalotes, jaune d\'œuf, lait',prep:'Fouetter.',note:'',_o:false},
-  {id:41,cat:'sauces',name:'Sauce au fromage',bilan:{P:0.5,L:1,G:1},ing:'Beurre, échalotes, jaune, lait, gruyère',prep:'Velouté + gruyère.',note:'',_o:false},
-  {id:42,cat:'sauces',name:'Sauce curry (fb)',bilan:{L:1},ing:'Fromage blanc, curry',prep:'Curry + fromage blanc.',note:'',_o:false},
-  {id:43,cat:'sauces',name:'Sauce plumetis',bilan:{P:1,L:1},ing:'Yaourt, citron, œufs de lump',prep:'Fouetter.',note:'',_o:false},
-  {id:44,cat:'sauces',name:'Sauce fenouillette',bilan:{P:0.5},ing:'Court-bouillon fenouil, maïzena, fb',prep:'Délayer.',note:'',_o:false},
-  {id:45,cat:'sauces',name:'Sauce maraîchère',bilan:{L:1},ing:'Jus tomate, concombre, fromage faisselle',prep:'Mixer.',note:'',_o:false},
-  {id:46,cat:'sauces',name:'Sauce au céleri',bilan:{P:1,L:1},ing:'Céleri-rave, cornichons, yaourt',prep:'Mixer.',note:'',_o:false},
-  {id:47,cat:'sauces',name:'Sauce cocktail',bilan:{L:0.5},ing:'Fromage blanc, moutarde, ketchup',prep:'Fouetter.',note:'',_o:false},
-  {id:48,cat:'sauces',name:'Sauce au homard',bilan:{L:1,S:1},ing:'Bisque homard, fromage blanc',prep:'Mélanger.',note:'',_o:false},
-  {id:49,cat:'sauces',name:'Sauce artichaut',bilan:{L:1},ing:'Fromage blanc, fonds d\'artichaut',prep:'Mixer.',note:'',_o:false},
-  {id:70,cat:'sauces',name:'Sauce champignon',bilan:{L:0.5},ing:'Champignons, lait, bouillon',prep:'Hacher. Macérer.',note:'',_o:false},
-  {id:50,cat:'desserts',name:'Petits pots crème orange',bilan:{P:0.5,L:1,F:1},ing:'4 oranges, 400ml lait, 2 œufs',prep:'Zestes + lait + œufs. Bain-marie 1h.',note:'',_o:false},
-  {id:51,cat:'desserts',name:'Pommes Tante Lucie',bilan:{F:1.5},ing:'4 pommes, 100g raisin blanc',prep:'Vider pommes. Farcir raisin. Four 45mn.',note:'',_o:false},
-  {id:52,cat:'desserts',name:'Perles de melon fraises',bilan:{F:2.5},ing:'600g melon, 300g fraises',prep:'Billes melon. Coulis fraises.',note:'',_o:false},
-  {id:53,cat:'desserts',name:'Grosse crêpe abricots',bilan:{P:1,L:0.5,G:1,F:1,S:1},ing:'20g farine, 1 œuf, lait, huile, abricots secs',prep:'Mélanger. Reposer 15mn. Cuire.',note:'',_o:false},
-  {id:54,cat:'desserts',name:'Sorbet fruits d\'été',bilan:{F:1.5},ing:'800g fruits, édulcorant',prep:'Mixer. Sorbetière 2-3h.',note:'1 ou 2F',_o:false},
-  {id:55,cat:'desserts',name:'Sorbet cassis',bilan:{F:1.5},ing:'600g cassis, eau',prep:'Jus + eau. Sorbetière 1h30.',note:'1 ou 2F',_o:false},
-  {id:56,cat:'desserts',name:'Glace express',bilan:{L:1,F:1},ing:'Lait concentré, 150g fraises surgelées',prep:'Mixer. Consommer immédiatement.',note:'',_o:false},
-  {id:57,cat:'desserts',name:'Gâteau aux pommes',bilan:{P:0.5,F:1,S:1},ing:'1 yaourt, 80g farine, 1 œuf, 400g pommes',prep:'Mélanger. Pommes. Four 20mn.',note:'',_o:false},
-  {id:58,cat:'desserts',name:'Clafoutis cerises',bilan:{P:1,F:1,S:1},ing:'400g cerises, 3 œufs, lait, 80g farine',prep:'Pâte. Cerises. Four 30-35mn.',note:'',_o:false},
-  {id:59,cat:'desserts',name:'Milk-shake fraises',bilan:{L:2,F:1},ing:'150g fraises, fromage blanc, 25cl lait',prep:'Mixer. Servir immédiatement.',note:'',_o:false},
-  {id:60,cat:'desserts',name:'Milk-shake banane',bilan:{L:2,F:2},ing:'1 banane, fromage blanc, 25cl lait',prep:'Mixer. Servir immédiatement.',note:'',_o:false}
+  {id:30,cat:'sauces',name:'Sauce vinaigrette minceur',bilan:{G:1},ing:'75cl eau, 15cl vinaigre de vin, 150g huile végétale, 5 càc fécule pomme de terre, 8 càc moutarde, sel, poivre',prep:'Faire chauffer l\'eau, le sel et le poivre dans une casserole. Délayer la fécule avec un peu d\'eau puis l\'ajouter et porter à ébullition.\nLorsque le mélange épaissit, retirer du feu et laisser refroidir en remuant.\nPendant ce temps, monter la moutarde avec le vinaigre comme pour une mayonnaise, puis incorporer l\'huile petit à petit.\nLorsque le premier mélange est froid, l\'incorporer au second. Se conserve 1 mois au réfrigérateur.',note:'5 càc = 1G',_o:false},
+  {id:31,cat:'sauces',name:'Sauce persil (yaourt)',bilan:{L:1},ing:'1 yaourt nature, 1 càs moutarde, 1 càc jus de citron, 1 càs persil haché, 1 cornichon haché',prep:'Mélanger le tout. Sauce froide pour relever les viandes froides.',note:'',_o:false},
+  {id:32,cat:'sauces',name:'Sauce rose (yaourt)',bilan:{L:0.5},ing:'2 càs yaourt nature, 10cl coulis de tomate, ½ càc moutarde, sel, poivre',prep:'Mélanger le tout. Sauce froide, un régal dans les salades à la tomate.',note:'',_o:false},
+  {id:33,cat:'sauces',name:'Sauce ail (yaourt)',bilan:{L:0.5},ing:'2 gousses d\'ail, 1 yaourt nature, 1 càs paprika doux, 1 càs ciboulette hachée, poivre',prep:'Réduire les 2 gousses d\'ail en purée. Fouetter l\'ail avec le yaourt, ajouter et mélanger paprika, ciboulette et poivre. Sauce froide, parfume les crudités et salades.',note:'',_o:false},
+  {id:34,cat:'sauces',name:'Sauce moutarde (yaourt)',bilan:{L:1},ing:'1 yaourt nature, 1 càs moutarde forte, 1 càs persil haché, sel, poivre',prep:'Fouetter le yaourt, puis ajouter les autres ingrédients. Sauce froide accompagnant grillades et crudités.',note:'',_o:false},
+  {id:35,cat:'sauces',name:'Sauce tomate',bilan:{},ing:'1 boîte tomates pelées concassées, bouquet garni, 1-2 gousses d\'ail, poivre',prep:'Chauffer les tomates dans une petite casserole, ajouter le bouquet garni, l\'ail et le poivre.\nFaire cuire 20mn sur feu doux. Retirer le bouquet et mixer.\nSauce chaude ou froide. Se mélange aux pâtes ou au riz sans ajouter de graisse.',note:'0 case',_o:false},
+  {id:36,cat:'sauces',name:'Sauce aux oignons',bilan:{},ing:'500g oignons pelés et émincés, 10cl eau, sel, poivre',prep:'Faire revenir les oignons dans une poêle anti-adhésive jusqu\'à ce qu\'ils deviennent transparents. Ne pas les laisser dorer.\nLes passer au presse-purée ou les mixer en ajoutant l\'eau. Sel, poivre. Réchauffer à feu doux.',note:'0 case',_o:false},
+  {id:37,cat:'sauces',name:'Sauce basilic',bilan:{G:1},ing:'15cl jus de tomate, 1 càs huile d\'olive, 1 càc jus de citron, 1 càs basilic haché, sel, poivre',prep:'Fouetter tous les ingrédients dans l\'ordre. Sauce froide, délicieuse avec salade au fromage de chèvre.',note:'',_o:false},
+  {id:38,cat:'sauces',name:'Sauce concombre',bilan:{L:1,G:1},ing:'½ concombre, 2,5 yaourts, 5cl lait, 1 càs huile d\'olive, ail haché, sel, paprika, poivre',prep:'Éplucher le concombre, couper en deux, retirer les pépins. Râper la chair à la grosse râpe. Mettre dans une passoire, mélanger avec le sel, poser un poids dessus pour exprimer le jus. Laisser égoutter 20mn.\nMixer l\'ail et le poivre. Ajouter le reste des ingrédients et mixer brièvement. Servir très frais.',note:'',_o:false},
+  {id:39,cat:'sauces',name:'Sauce crudités (fb)',bilan:{L:1},ing:'2 càs fromage blanc, 1 càc moutarde forte, 1 càs vinaigre de vin, 2 càs eau, herbes (estragon, cerfeuil ou basilic), sel, poivre',prep:'Fouetter le fromage blanc puis ajouter les autres ingrédients dans l\'ordre en fouettant le tout. Sauce froide.',note:'',_o:false},
+  {id:40,cat:'sauces',name:'Sauce échalote',bilan:{P:0.5,L:0.5,G:1},ing:'10g beurre, 2 échalotes hachées fin, 1 jaune d\'œuf, 25cl lait écrémé, sel, poivre',prep:'Chauffer dans une petite casserole le beurre et l\'échalote, puis mélanger le jaune d\'œuf et le lait écrémé, sel, poivre. Fouetter sans arrêt pour obtenir une sauce veloutée. Sauce chaude pour poissons et viandes blanches.',note:'',_o:false},
+  {id:41,cat:'sauces',name:'Sauce au fromage',bilan:{P:0.5,L:1,G:1},ing:'10g beurre, 2 échalotes, 1 jaune d\'œuf, 25cl lait écrémé, 1 càc moutarde, 50g gruyère maigre râpé, sel, poivre',prep:'Chauffer le beurre et l\'échalote dans une petite casserole, puis mélanger le jaune d\'œuf et le lait écrémé, sel, poivre. Fouetter sans arrêt pour obtenir une sauce veloutée.\nPrélever 2 càs pour diluer la moutarde. Reverser dans la casserole. Ajouter peu à peu le gruyère râpé en tournant. Sauce chaude pour volailles, poissons et légumes.',note:'',_o:false},
+  {id:42,cat:'sauces',name:'Sauce curry (fb)',bilan:{L:1},ing:'1 càc curry, 1 càs eau, 200g fromage blanc, 1 jaune d\'œuf, sel, poivre',prep:'Délayer le curry dans l\'eau. Mélanger au fromage blanc. Chauffer doucement au bain-marie, saler et poivrer. Ajouter le jaune d\'œuf en tournant jusqu\'à ce que la chaleur épaississe un peu la sauce. Sauce chaude pour viandes, poissons et légumes.',note:'',_o:false},
+  {id:43,cat:'sauces',name:'Sauce plumetis',bilan:{P:1,L:1},ing:'1 yaourt nature, 1 càs jus de citron, 1 càs œufs de lump, ½ càs cerfeuil haché, sel, poivre',prep:'Fouetter le yaourt avec le jus de citron. Puis mélanger délicatement les autres ingrédients. Sauce froide accompagnant asperges, poissons ou salade d\'endives.',note:'',_o:false},
+  {id:44,cat:'sauces',name:'Sauce fenouillette',bilan:{P:0.5},ing:'1 bol court-bouillon au fenouil, 1 càc maïzena, 2 càs fromage blanc, sel, poivre',prep:'Dans une casserole, délayer 1 càc rase de maïzena avec 1 bol de court-bouillon au fenouil. Laisser prendre sur feu doux. Ajouter 2 càs de fromage blanc. Saler, poivrer. Sauce chaude pour poissons.',note:'',_o:false},
+  {id:45,cat:'sauces',name:'Sauce maraîchère',bilan:{L:1},ing:'10cl jus de tomate, 3 càs concombre pelé épépiné, 5cl jus de citron, 2 càs fromage faisselle, pincée de Cayenne, herbes',prep:'Mixer le concombre, le jus de tomate et le concombre. Ajouter le fromage faisselle, la pincée de Cayenne, les herbes et le sel. Sauce froide accompagnant légumes, viandes et poissons froids.',note:'',_o:false},
+  {id:46,cat:'sauces',name:'Sauce au céleri',bilan:{P:1,L:1},ing:'50g céleri-rave, 2 cornichons, 1 échalote, 1 œuf dur haché, 1 càc sauce Worcester, 1 yaourt maigre battu, sel',prep:'Mixer le céleri-rave, les cornichons et l\'échalote. Mettre dans un bol avec l\'œuf. Ajouter la sauce Worcester et le yaourt. Sauce froide accompagnant crudités et viandes froides.',note:'',_o:false},
+  {id:47,cat:'sauces',name:'Sauce cocktail',bilan:{L:0.5},ing:'2 càs fromage blanc, 1 càc moutarde forte, 1 càs vinaigre de vin, 2 càs eau, ketchup, sel, poivre',prep:'Fouetter le fromage blanc puis ajouter les autres ingrédients dans l\'ordre en fouettant le tout. Sauce froide à déguster avec du crabe ou des crevettes.',note:'',_o:false},
+  {id:48,cat:'sauces',name:'Sauce au homard',bilan:{L:1,S:1},ing:'2cl bisque de homard concentrée, 200g fromage blanc, quelques gouttes d\'eau, 1 càs basilic ciselé, ½ càc thym frais',prep:'Battre la bisque de homard pour la lisser. Ajouter le fromage blanc délayé avec quelques gouttes d\'eau, puis ajouter les herbes. Porter à votre goût (la bisque est déjà salée). Sauce froide à déguster avec du poisson froid.',note:'',_o:false},
+  {id:49,cat:'sauces',name:'Sauce artichaut',bilan:{L:1},ing:'350g fromage blanc, 4 fonds d\'artichaut tendres, 1 échalote émincée, quelques gouttes de Tabasco, sel, poivre',prep:'Mixer le fromage blanc avec les fonds d\'artichaut et l\'échalote. Ajouter le Tabasco, sel, poivre. Sauce froide pour assortiment de crudités.',note:'',_o:false},
+  {id:70,cat:'sauces',name:'Sauce champignon',bilan:{L:0.5},ing:'50g champignons de Paris, 1 jus de citron, ½ càc basilic, ½ càc sarriette, 1 cube bouillon volaille, 10cl eau, 10cl lait, sel, poivre',prep:'Hacher menu les champignons. Les mélanger avec le jus de citron, le basilic et la sarriette. Laisser macérer 2 heures.\nSur feu moyen-vif, diluer le cube de bouillon dans 10cl d\'eau bouillante. Ajouter le lait.\nHors du feu, ajouter les champignons. Sel, poivre. Sauce chaude pour légumes vapeur, viandes blanches et poissons.',note:'',_o:false},
+  {id:50,cat:'desserts',name:'Petits pots crème orange',bilan:{P:0.5,L:1,F:1},ing:'4 oranges non traitées, 400ml lait écrémé, 2 œufs entiers, édulcorant',prep:'Peler les oranges avec un couteau économe. Blanchir les zestes 10mn à l\'eau bouillante. Les égoutter et les hacher très finement.\nDélayer l\'édulcorant et le lait. Dans un autre saladier, battre les œufs entiers, les verser dans le lait. Passer au tamis et ajouter les zestes d\'orange.\nRemplir les petits pots. Cuire au bain-marie 1 heure à feu doux. Mettre à refroidir.\nFinir de peler les oranges pour retirer les quartiers. Décorer avec des quartiers d\'orange disposés en rosaces.',note:'',_o:false},
+  {id:51,cat:'desserts',name:'Pommes Tante Lucie',bilan:{F:1.5},ing:'4 pommes, 100g raisin blanc',prep:'Sans peler les pommes, les vider soigneusement et les piquer avec une fourchette pour éviter qu\'elles n\'éclatent.\nCouper les grains de raisins en morceaux en veillant à ce qu\'il ne reste plus de pépin, en recueillant le jus.\nFarcir chaque pomme avec le raisin. Les placer dans un plat allant au four. Les arroser de jus de raisin.\nLaisser cuire à four doux pendant 45 minutes.',note:'',_o:false},
+  {id:52,cat:'desserts',name:'Perles de melon fraises',bilan:{F:2.5},ing:'600g melon, 300g fraises, 1 càs jus de citron, 3 feuilles de gélatine',prep:'Détailler la pulpe du melon en petites boules à l\'aide d\'une cuillère parisienne. Répartir dans des coupes et tenir au frais.\nLaver les fraises, les équeuter et les passer au mixer. Recueillir la purée et la mélanger au jus de citron.\nFaire ramollir les feuilles de gélatine dans de l\'eau froide environ 10mn, ajouter le coulis de fraises.\nRéchauffer jusqu\'à ce que le mélange épaississe sans laisser bouillir. Retirer du feu et laisser tiédir.\nNapper les perles de melon avec ce coulis. Servir très frais.',note:'',_o:false},
+  {id:53,cat:'desserts',name:'Grosse crêpe abricots',bilan:{P:1,L:0.5,G:1,F:1,S:1},ing:'20g farine, 1 œuf, 12,5cl lait écrémé, 1 càc huile, 20g abricots secs hachés',prep:'Dans une terrine, mélanger la farine avec l\'œuf, le lait et l\'huile.\nAjouter les abricots secs et laisser reposer 15 minutes.\nFaire chauffer une poêle anti-adhésive, y verser la pâte.\nCuire jusqu\'à ce que la crêpe se décolle facilement. La retourner et terminer la cuisson.\nVariante : remplacer le lait et les abricots par 1 yaourt allégé au fruit.',note:'',_o:false},
+  {id:54,cat:'desserts',name:'Sorbet fruits d\'été',bilan:{F:1.5},ing:'800g de fruits (fraises, framboises, myrtilles, pêches, abricots…), édulcorant',prep:'Mixer les fruits et les passer au chinois.\nAjouter l\'édulcorant selon le goût.\nMettre en sorbetière pendant 2 à 3 heures.',note:'1 ou 2F',_o:false},
+  {id:55,cat:'desserts',name:'Sorbet cassis',bilan:{F:1.5},ing:'600g cassis, 300g eau, édulcorant',prep:'Extraire le jus du cassis. Le passer, ajouter l\'eau et l\'édulcorant selon le goût.\nMettre à glacer en sorbetière au moins 1h30.\nNota : cette recette peut se faire également avec des groseilles.',note:'1 ou 2F',_o:false},
+  {id:56,cat:'desserts',name:'Glace express',bilan:{L:1,F:1},ing:'80g lait concentré ½ écrémé non sucré, 150g fraises ou framboises SURGELÉES, Candérel selon goût',prep:'Mixer les fruits au robot avec le lait et le Candérel.\nNE PAS METTRE AU CONGÉLATEUR.\nCONSOMMER IMMÉDIATEMENT.',note:'',_o:false},
+  {id:57,cat:'desserts',name:'Gâteau aux pommes',bilan:{P:0.5,F:1,S:1},ing:'1 yaourt goût bulgare, 80g farine, 1 œuf, 400g pommes, 1,5 càc levure, 1 càc beurre, 3 càs Candérel, cannelle/vanille',prep:'Préchauffer le four Th.7. Mélanger l\'œuf avec le yaourt, le Candérel, la cannelle/vanille, la farine et la levure.\nVerser dans un moule à manqué antiadhésif.\nPeler les pommes, les couper en quartiers et les disposer sur la pâte, les laisser s\'enfoncer légèrement sans appuyer.\nParsemer d\'une càc de Candérel et de petites noisettes de beurre.\nCuire 20 minutes environ dans un four chaud. Déguster de préférence tiède.',note:'',_o:false},
+  {id:58,cat:'desserts',name:'Clafoutis cerises',bilan:{P:1,F:1,S:1},ing:'400g cerises noires (ou prunes), 3 œufs, 1dl lait ½ écrémé, 80g farine, 15g sucre Candérel, 1 sachet levure, vanille en poudre',prep:'Ne pas enlever les noyaux car le jus en se répandant empêcherait la pâte de bien lever.\nAmener doucement le lait à ébullition. Casser les œufs dans un saladier, mélanger au fouet, ajouter le sucre.\nTamiser ensemble la farine et la levure. Ajouter peu à peu au mélange œufs-sucre avec une spatule en bois.\nVerser le lait chaud dessus peu à peu en travaillant énergiquement.\nLaver les cerises, retirer les queues. Garnir le fond du moule avec les fruits.\nCuire 5mn à puissance maximale, puis 25 à 30mn Th.6. Servir encore tiède.',note:'',_o:false},
+  {id:59,cat:'desserts',name:'Milk-shake fraises',bilan:{L:2,F:1},ing:'150g fraises (fraîches ou surgelées), 100g fromage blanc 10%, 25cl lait écrémé, Candérel, 1 filet jus de citron, 1 glaçon',prep:'Laver, égoutter, puis équeuter les fraises.\nDans le bol du mixeur, mettre les fraises, le jus de citron, le sucre, le lait écrémé, le fromage blanc et le glaçon.\nRéduire en purée, puis continuer de mélanger 1 minute à petite vitesse pour rendre l\'ensemble un peu mousseux.\nRépartir dans deux grands verres. Servir immédiatement avec une paille.',note:'',_o:false},
+  {id:60,cat:'desserts',name:'Milk-shake banane',bilan:{L:2,F:2},ing:'1 banane (160g), 100g fromage blanc 10%, 25cl lait écrémé, extrait de vanille, 1 glaçon',prep:'Introduire dans le bol du mixeur : la banane coupée en morceaux, le fromage blanc, le lait écrémé, quelques gouttes d\'extrait de vanille et un glaçon.\nBroyer puis mélanger quelques instants à petite vitesse, afin que l\'ensemble soit légèrement mousseux.\nVerser dans deux grands verres. Servir avec une paille.',note:'',_o:false}
 ];
 
 var RCAT=[{key:'plats',label:'Plats',e:'🍲'},{key:'sauces',label:'Sauces',e:'🥣'},{key:'desserts',label:'Desserts',e:'🍮'},{key:'mes',label:'Mes recettes',e:'📒'}];
@@ -699,9 +699,13 @@ function getWEU(wm){var t=0;for(var i=0;i<7;i++){var k=dk(addD(dfk(wm),i));if(da
 // DROPDOWN
 // ═══════════════════════════════════════
 function posDrop(el){
-  var r=el.getBoundingClientRect(),mh=Math.min(230,window.innerHeight-r.bottom-8);
-  gac.style.width=r.width+'px';gac.style.left=r.left+'px';gac.style.maxHeight=mh+'px';
-  gac.style.top=(r.bottom+4)+'px';gac.style.bottom='auto';
+  var r=el.getBoundingClientRect();
+  var mh=Math.min(230,window.innerHeight-r.bottom-8);
+  gac.style.width=r.width+'px';
+  gac.style.left=r.left+'px';
+  gac.style.top=(r.bottom+4)+'px';
+  gac.style.bottom='auto';
+  gac.style.maxHeight=Math.max(80,mh)+'px';
 }
 function showDrop(mi,m,el){
   gacMi=mi;gacM=m;
@@ -733,7 +737,7 @@ function renderWeek(){
 function shiftW(dir){
   wOff+=dir;var bm=getMon(TODAY),dm=addD(bm,wOff*7),ds=addD(dm,6);
   if(dk(cur)<dk(dm)||dk(cur)>dk(ds))cur=new Date(dm);
-  getDay(cur);render();
+  loadData();getDay(cur);render();saveData();
 }
 
 // ═══════════════════════════════════════
@@ -936,27 +940,34 @@ function togRec(id){for(var i=0;i<recipes.length;i++){if(recipes[i].id===id){rec
 function delRec(id){recipes=recipes.filter(function(r){return r.id!==id;});if(curRecCat)renderRecList(curRecCat);renderRecHome();saveData();}
 var tempIngs=[];
 function addIng(){
-  var n=document.getElementById('ringName').value.trim(),q=document.getElementById('ringQty').value.trim();
+  var n=document.getElementById('ringName').value.trim();
+  var q=document.getElementById('ringQty').value.trim();
   if(!n||!q){alert('Remplissez le nom et la quantité.');return;}
   tempIngs.push({n:n,q:q});
-  document.getElementById('ringName').value='';document.getElementById('ringQty').value='';
+  document.getElementById('ringName').value='';
+  document.getElementById('ringQty').value='';
   document.getElementById('ringName').focus();
   renderIngList();
 }
 function removeIng(i){tempIngs.splice(i,1);renderIngList();}
 function renderIngList(){
   var el=document.getElementById('ingList');
+  if(!el)return;
   if(!tempIngs.length){el.innerHTML='';return;}
-  el.innerHTML='<div style="background:#f6fdf9;border-radius:10px;padding:8px 12px;border:1px solid var(--border);">'+
-    tempIngs.map(function(x,i){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border);">'+(i===tempIngs.length-1?'style="border-bottom:none;"':'')+
-    '<span style="color:var(--text);">'+x.q+' '+x.n+'</span><button onclick="removeIng('+i+')" style="background:none;border:none;color:#ffbbbb;cursor:pointer;font-size:14px;">✕</button></div>';}).join('')+
-  '</div>';
+  var rows=tempIngs.map(function(x,i){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border);">'
+      +'<span>'+x.q+' '+x.n+'</span>'
+      +'<button onclick="removeIng('+i+')" style="background:none;border:none;color:#d97070;cursor:pointer;font-size:15px;padding:0 4px;">&#x2715;</button>'
+      +'</div>';
+  }).join('');
+  el.innerHTML='<div style="background:#f6fdf9;border-radius:10px;padding:4px 12px;border:1px solid var(--border);margin-top:6px;">'+rows+'</div>';
 }
 function openNewRec(){
   tempIngs=[];
   ['bP','bL','bG','bF','bS'].forEach(function(id){document.getElementById(id).value='0';});
   document.getElementById('rname').value='';
-  document.getElementById('ringName').value='';document.getElementById('ringQty').value='';
+  document.getElementById('ringName').value='';
+  document.getElementById('ringQty').value='';
   document.getElementById('rprep').value='';
   document.getElementById('rcat').value='mes';
   renderIngList();
@@ -966,12 +977,13 @@ function closeRecModal(e){if(!e||e.target===document.getElementById('recmodal'))
 function saveRec(){
   var name=document.getElementById('rname').value.trim();
   if(!name){alert('Le nom est obligatoire.');return;}
-  if(!tempIngs.length){alert('Ajoutez au moins un ingrédient.');return;}
+  if(!tempIngs.length){alert('Ajoutez au moins un ingredient.');return;}
   var cat=document.getElementById('rcat').value,bilan={};
   ['P','L','G','F','S'].forEach(function(k){var v=parseFloat(document.getElementById('b'+k).value)||0;if(v>0)bilan[k]=v;});
   var ing=tempIngs.map(function(x){return x.q+' '+x.n;}).join(', ');
   var prep=document.getElementById('rprep').value.trim();
   recipes.push({id:newRecId++,cat:cat,name:name,bilan:bilan,ing:ing,prep:prep,note:'',_o:false});
+  tempIngs=[];
   document.getElementById('recmodal').classList.remove('open');
   renderRecHome();saveData();if(curRecCat)renderRecList(curRecCat);
 }
@@ -998,7 +1010,7 @@ setTimeout(function(){
   setTimeout(function(){s.style.display='none';},400);
 },900);
 
-getDay(cur);render();
+loadData();getDay(cur);render();
 
 // ═══════════════════════════════════════
 // EXPORT SEMAINIER XLSX
