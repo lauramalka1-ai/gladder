@@ -310,8 +310,8 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 .rcbody.open{display:block;}
 .rst{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 3px;}
 .rst:first-child{margin-top:0;}
-.ring{font-size:13px;color:var(--text2);line-height:1.6;}
-.rprep{font-size:12px;color:var(--text3);line-height:1.7;}
+.ring{font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-wrap:break-word;}
+.rprep{font-size:12px;color:var(--text3);line-height:1.7;white-space:pre-wrap;word-wrap:break-word;}
 .rdelbtn{padding:7px 13px;background:none;border:1.5px solid #fdd5d5;border-radius:9px;font-size:12px;color:var(--red);cursor:pointer;margin-top:10px;font-family:var(--font);}
 
 /* ── BOTTOM NAV ── */
@@ -473,10 +473,15 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
       <div><div class="mlabel">🍎 Fruits</div><input class="minput" id="bF" type="number" min="0" step="0.5" value="0"/></div>
       <div><div class="mlabel">🍞 Féculents</div><input class="minput" id="bS" type="number" min="0" step="0.5" value="0"/></div>
     </div>
-    <div class="mlabel">Ingrédients (optionnel)</div>
-    <textarea class="mtxt" id="ring" placeholder="1 œuf, 200 ml lait…"></textarea>
+    <div class="mlabel">Ingrédients <span style="color:var(--red);font-size:10px;">(obligatoires)</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input class="minput" id="ringName" type="text" placeholder="Nom (ex: œuf)" style="flex:1;"/>
+      <input class="minput" id="ringQty" type="text" placeholder="Qté (ex: 2)" style="width:90px;"/>
+      <button onclick="addIng()" style="padding:10px 14px;background:rgba(123,184,154,.15);border:1.5px solid var(--accent2);border-radius:12px;color:var(--green);font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);">+</button>
+    </div>
+    <div id="ingList" style="margin-bottom:12px;"></div>
     <div class="mlabel">Préparation (optionnel)</div>
-    <textarea class="mtxt" id="rprep" placeholder="Mélangez…"></textarea>
+    <textarea class="mtxt" id="rprep" placeholder="Décrivez les étapes…"></textarea>
     <div class="mactions">
       <button class="mcancel" onclick="closeRecModal()">Annuler</button>
       <button class="msave" onclick="saveRec()">Enregistrer</button>
@@ -694,10 +699,9 @@ function getWEU(wm){var t=0;for(var i=0;i<7;i++){var k=dk(addD(dfk(wm),i));if(da
 // DROPDOWN
 // ═══════════════════════════════════════
 function posDrop(el){
-  var r=el.getBoundingClientRect(),sb=window.innerHeight-r.bottom-8,sa=r.top-8,mh=Math.min(230,Math.max(sb,sa));
+  var r=el.getBoundingClientRect(),mh=Math.min(230,window.innerHeight-r.bottom-8);
   gac.style.width=r.width+'px';gac.style.left=r.left+'px';gac.style.maxHeight=mh+'px';
-  if(sb>=120||sb>=sa){gac.style.top=(r.bottom+4)+'px';gac.style.bottom='auto';}
-  else{gac.style.bottom=(window.innerHeight-r.top+4)+'px';gac.style.top='auto';}
+  gac.style.top=(r.bottom+4)+'px';gac.style.bottom='auto';
 }
 function showDrop(mi,m,el){
   gacMi=mi;gacM=m;
@@ -729,7 +733,7 @@ function renderWeek(){
 function shiftW(dir){
   wOff+=dir;var bm=getMon(TODAY),dm=addD(bm,wOff*7),ds=addD(dm,6);
   if(dk(cur)<dk(dm)||dk(cur)>dk(ds))cur=new Date(dm);
-  loadData();getDay(cur);render();saveData();
+  getDay(cur);render();
 }
 
 // ═══════════════════════════════════════
@@ -930,15 +934,46 @@ function renderRecList(k){
 }
 function togRec(id){for(var i=0;i<recipes.length;i++){if(recipes[i].id===id){recipes[i]._o=!recipes[i]._o;break;}}if(curRecCat)renderRecList(curRecCat);}
 function delRec(id){recipes=recipes.filter(function(r){return r.id!==id;});if(curRecCat)renderRecList(curRecCat);renderRecHome();saveData();}
-function openNewRec(){['bP','bL','bG','bF','bS'].forEach(function(id){document.getElementById(id).value='0';});document.getElementById('rname').value='';document.getElementById('ring').value='';document.getElementById('rprep').value='';document.getElementById('recmodal').classList.add('open');}
+var tempIngs=[];
+function addIng(){
+  var n=document.getElementById('ringName').value.trim(),q=document.getElementById('ringQty').value.trim();
+  if(!n||!q){alert('Remplissez le nom et la quantité.');return;}
+  tempIngs.push({n:n,q:q});
+  document.getElementById('ringName').value='';document.getElementById('ringQty').value='';
+  document.getElementById('ringName').focus();
+  renderIngList();
+}
+function removeIng(i){tempIngs.splice(i,1);renderIngList();}
+function renderIngList(){
+  var el=document.getElementById('ingList');
+  if(!tempIngs.length){el.innerHTML='';return;}
+  el.innerHTML='<div style="background:#f6fdf9;border-radius:10px;padding:8px 12px;border:1px solid var(--border);">'+
+    tempIngs.map(function(x,i){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border);">'+(i===tempIngs.length-1?'style="border-bottom:none;"':'')+
+    '<span style="color:var(--text);">'+x.q+' '+x.n+'</span><button onclick="removeIng('+i+')" style="background:none;border:none;color:#ffbbbb;cursor:pointer;font-size:14px;">✕</button></div>';}).join('')+
+  '</div>';
+}
+function openNewRec(){
+  tempIngs=[];
+  ['bP','bL','bG','bF','bS'].forEach(function(id){document.getElementById(id).value='0';});
+  document.getElementById('rname').value='';
+  document.getElementById('ringName').value='';document.getElementById('ringQty').value='';
+  document.getElementById('rprep').value='';
+  document.getElementById('rcat').value='mes';
+  renderIngList();
+  document.getElementById('recmodal').classList.add('open');
+}
 function closeRecModal(e){if(!e||e.target===document.getElementById('recmodal'))document.getElementById('recmodal').classList.remove('open');}
 function saveRec(){
-  var name=document.getElementById('rname').value.trim();if(!name)return;
+  var name=document.getElementById('rname').value.trim();
+  if(!name){alert('Le nom est obligatoire.');return;}
+  if(!tempIngs.length){alert('Ajoutez au moins un ingrédient.');return;}
   var cat=document.getElementById('rcat').value,bilan={};
   ['P','L','G','F','S'].forEach(function(k){var v=parseFloat(document.getElementById('b'+k).value)||0;if(v>0)bilan[k]=v;});
-  var ing=document.getElementById('ring').value.trim(),prep=document.getElementById('rprep').value.trim();
+  var ing=tempIngs.map(function(x){return x.q+' '+x.n;}).join(', ');
+  var prep=document.getElementById('rprep').value.trim();
   recipes.push({id:newRecId++,cat:cat,name:name,bilan:bilan,ing:ing,prep:prep,note:'',_o:false});
-  document.getElementById('recmodal').classList.remove('open');renderRecHome();saveData();if(curRecCat)renderRecList(curRecCat);
+  document.getElementById('recmodal').classList.remove('open');
+  renderRecHome();saveData();if(curRecCat)renderRecList(curRecCat);
 }
 
 // ═══════════════════════════════════════
