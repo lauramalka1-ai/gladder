@@ -238,32 +238,15 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 
 /* ── BOTTOM SHEET SUGGESTIONS ── */
 .acdrop{display:none;}
-
-.bs-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.3);
-  z-index:8000;display:none;
-}
+.bs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:8000;display:none;}
 .bs-overlay.open{display:block;}
-
-.bs-sheet{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:430px;
-  background:var(--card);
-  border-radius:20px 20px 0 0;
-  box-shadow:0 -4px 32px rgba(0,0,0,.15);
-  z-index:8001;
-  display:none;
-  flex-direction:column;
-  max-height:40vh;
-  /* iOS keyboard fix */
-  padding-bottom:env(keyboard-inset-height, 0px);
-}
+.bs-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-radius:20px 20px 0 0;box-shadow:0 -4px 32px rgba(0,0,0,.15);z-index:8001;display:none;flex-direction:column;max-height:45vh;}
 .bs-sheet.open{display:flex;}
 .bs-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 6px;flex-shrink:0;}
 .bs-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:0 16px 8px;flex-shrink:0;}
 .bs-list{overflow-y:auto;flex:1;padding-bottom:calc(12px + var(--safe-bottom));}
 .bs-list::-webkit-scrollbar{display:none;}
-.acrow{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px;color:var(--text);-webkit-tap-highlight-color:transparent;}
+.acrow{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px;color:var(--text);}
 .acrow:last-child{border-bottom:none;}
 .acrow:active{background:var(--bg);}
 .actag{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:500;}
@@ -373,8 +356,27 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 .msave{flex:1;padding:12px;background:var(--accent);border:none;border-radius:12px;font-size:14px;font-weight:700;color:white;cursor:pointer;font-family:var(--font);}
 .mcancel{padding:12px 18px;background:var(--border);border:none;border-radius:12px;font-size:14px;color:var(--text2);cursor:pointer;font-family:var(--font);}
 
-/* SPLASH */
-.splash{
+/* ── AUTH SCREEN ── */
+.auth-screen{
+  position:fixed;inset:0;background:var(--bg);
+  z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:32px 24px;
+}
+.auth-logo{font-family:var(--font-display);font-size:52px;color:var(--accent);font-style:italic;margin-bottom:6px;}
+.auth-sub{font-size:14px;color:var(--text3);margin-bottom:40px;font-weight:300;}
+.auth-card{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.auth-title{font-family:var(--font-display);font-size:22px;color:var(--text);margin-bottom:20px;text-align:center;}
+.auth-input{width:100%;font-size:15px;padding:13px 15px;border-radius:13px;border:1.5px solid var(--border);background:#fafafa;color:var(--text);font-family:var(--font);outline:none;margin-bottom:12px;box-sizing:border-box;}
+.auth-input:focus{border-color:var(--accent);}
+.auth-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:13px;font-size:15px;font-weight:700;color:white;cursor:pointer;font-family:var(--font);margin-bottom:10px;}
+.auth-btn.secondary{background:transparent;border:1.5px solid var(--accent);color:var(--accent);}
+.auth-err{font-size:12px;color:var(--red);text-align:center;margin-bottom:10px;min-height:16px;}
+.auth-switch{font-size:13px;color:var(--text3);text-align:center;cursor:pointer;margin-top:8px;}
+.auth-switch span{color:var(--accent);font-weight:600;}
+.auth-user-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 18px 0;font-size:12px;color:var(--text3);}
+.auth-user-bar button{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;color:var(--text3);cursor:pointer;font-family:var(--font);}
+.sync-indicator{font-size:11px;color:var(--accent2);padding:0 18px 4px;}
   position:fixed;inset:0;background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   z-index:9999;transition:opacity .4s;
@@ -404,6 +406,9 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 .export-btn:active{opacity:.7;}
 
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -413,9 +418,23 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   <div class="splash-sub">Suivi nutritionnel</div>
 </div>
 
-<!-- Dropdown global (inutilisé) -->
-<div class="acdrop" id="gac"></div>
+<!-- Auth Screen -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-logo">Gladder</div>
+  <div class="auth-sub">Suivi nutritionnel</div>
+  <div class="auth-card">
+    <div class="auth-title" id="authTitle">Connexion</div>
+    <div class="auth-err" id="authErr"></div>
+    <input class="auth-input" id="authEmail" type="email" placeholder="Adresse email" autocomplete="email"/>
+    <input class="auth-input" id="authPwd" type="password" placeholder="Mot de passe" autocomplete="current-password"/>
+    <input class="auth-input" id="authPwd2" type="password" placeholder="Confirmer le mot de passe" style="display:none;" autocomplete="new-password"/>
+    <button class="auth-btn" id="authSubmit" onclick="authSubmit()">Se connecter</button>
+    <div class="auth-switch" id="authSwitch">Pas encore de compte ? <span onclick="toggleAuthMode()">Créer un compte</span></div>
+  </div>
+</div>
 
+<!-- Dropdown global -->
+<div class="acdrop" id="gac"></div>
 <!-- Bottom sheet suggestions -->
 <div class="bs-overlay" id="bsOverlay" onclick="hideDrop()"></div>
 <div class="bs-sheet" id="bsSheet">
@@ -423,11 +442,17 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   <div class="bs-title" id="bsTitle">Suggestions</div>
   <div class="bs-list" id="bsList"></div>
 </div>
+
 <div class="app">
   <div class="scroll-area" id="scroll-area">
 
     <!-- ── PAGE JOURNAL ── -->
     <div class="page active" id="page-journal">
+      <div class="auth-user-bar" id="userBar">
+        <span id="userEmail"></span>
+        <button onclick="signOut()">Déconnexion</button>
+      </div>
+      <div class="sync-indicator" id="syncIndicator"></div>
       <div class="journal-header">
         <div class="week-nav">
           <button class="week-arrow" onclick="shiftW(-1)">&#8592;</button>
@@ -500,10 +525,15 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
       <div><div class="mlabel">🍎 Fruits</div><input class="minput" id="bF" type="number" min="0" step="0.5" value="0"/></div>
       <div><div class="mlabel">🍞 Féculents</div><input class="minput" id="bS" type="number" min="0" step="0.5" value="0"/></div>
     </div>
-    <div class="mlabel">Ingrédients (optionnel)</div>
-    <textarea class="mtxt" id="ring" placeholder="1 œuf, 200 ml lait…"></textarea>
+    <div class="mlabel">Ingrédients <span style="color:var(--red);font-size:10px;text-transform:none;">(obligatoires)</span></div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input class="minput" id="ringName" type="text" placeholder="Nom (ex: œuf)" style="flex:1;"/>
+      <input class="minput" id="ringQty" type="text" placeholder="Qté (ex: 2)" style="width:85px;"/>
+      <button onclick="addIng()" style="padding:10px 14px;background:rgba(123,184,154,.15);border:1.5px solid var(--accent2);border-radius:12px;color:var(--green);font-weight:700;cursor:pointer;font-size:18px;line-height:1;">+</button>
+    </div>
+    <div id="ingList"></div>
     <div class="mlabel">Préparation (optionnel)</div>
-    <textarea class="mtxt" id="rprep" placeholder="Mélangez…"></textarea>
+    <textarea class="mtxt" id="rprep" placeholder="Décrivez les étapes…" style="min-height:80px;"></textarea>
     <div class="mactions">
       <button class="mcancel" onclick="closeRecModal()">Annuler</button>
       <button class="msave" onclick="saveRec()">Enregistrer</button>
@@ -613,56 +643,151 @@ var RCAT=[{key:'plats',label:'Plats',e:'🍲'},{key:'sauces',label:'Sauces',e:'�
 var curRecCat=null,newRecId=300;
 
 // ═══════════════════════════════════════
-// PERSISTANCE localStorage
+// FIREBASE
 // ═══════════════════════════════════════
-var SAVE_KEY = 'gladder_v1';
+var firebaseApp=null,db=null,fbAuth=null,currentUser=null,saveTimeout=null;
 
-function saveData() {
-  try {
-    var data = {
-      daymap: daymap,
-      recipes_custom: recipes.filter(function(r){ return r.id >= 300; }),
-      saved_at: Date.now()
-    };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  } catch(e) { /* quota exceeded, ignore */ }
+function initFirebase(){
+  if(firebaseApp)return;
+  var cfg={
+    apiKey:"AIzaSyDC_M7g4P4VfXmFsZAwNNFbxdbX38x1WUQ",
+    authDomain:"gladder-982cb.firebaseapp.com",
+    projectId:"gladder-982cb",
+    storageBucket:"gladder-982cb.firebasestorage.app",
+    messagingSenderId:"66492334112",
+    appId:"1:66492334112:web:2a0e3edd8c414bbd85bc45"
+  };
+  firebaseApp=firebase.initializeApp(cfg);
+  db=firebase.firestore();
+  fbAuth=firebase.auth();
+
+  fbAuth.onAuthStateChanged(function(user){
+    if(user){
+      currentUser=user;
+      document.getElementById('authScreen').style.display='none';
+      document.getElementById('userEmail').textContent=user.email;
+      loadDataFromFirebase();
+    } else {
+      currentUser=null;
+      document.getElementById('authScreen').style.display='flex';
+    }
+  });
 }
 
-function loadData() {
-  try {
-    var raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return;
-    var data = JSON.parse(raw);
-    // Restore daymap
-    if (data.daymap) {
-      var keys = Object.keys(data.daymap);
-      for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        var d = data.daymap[k];
-        // Restore meals with all fields
-        if (d.meals) {
-          for (var mi = 0; mi < d.meals.length; mi++) {
-            var meal = d.meals[mi];
-            // Ensure transient UI fields are reset
-            meal.open = false;
-            meal.sf = null;
-            meal.sr = null;
-            meal.sv = '';
-          }
-        }
-        daymap[k] = d;
-      }
+// AUTH UI
+var authIsLogin=true;
+function toggleAuthMode(){
+  authIsLogin=!authIsLogin;
+  document.getElementById('authTitle').textContent=authIsLogin?'Connexion':'Créer un compte';
+  document.getElementById('authSubmit').textContent=authIsLogin?'Se connecter':'Créer mon compte';
+  document.getElementById('authPwd2').style.display=authIsLogin?'none':'block';
+  document.getElementById('authSwitch').innerHTML=authIsLogin
+    ?'Pas encore de compte ? <span onclick="toggleAuthMode()">Créer un compte</span>'
+    :'Déjà un compte ? <span onclick="toggleAuthMode()">Se connecter</span>';
+  document.getElementById('authErr').textContent='';
+}
+
+function authSubmit(){
+  var email=document.getElementById('authEmail').value.trim();
+  var pwd=document.getElementById('authPwd').value;
+  var pwd2=document.getElementById('authPwd2').value;
+  var errEl=document.getElementById('authErr');
+  errEl.textContent='';
+  if(!email||!pwd){errEl.textContent='Remplissez email et mot de passe.';return;}
+  if(!authIsLogin&&pwd!==pwd2){errEl.textContent='Les mots de passe ne correspondent pas.';return;}
+  if(!authIsLogin&&pwd.length<6){errEl.textContent='Mot de passe trop court (6 caractères min).';return;}
+  document.getElementById('authSubmit').textContent='...';
+  if(authIsLogin){
+    fbAuth.signInWithEmailAndPassword(email,pwd).catch(function(e){
+      document.getElementById('authSubmit').textContent='Se connecter';
+      if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password')errEl.textContent='Email ou mot de passe incorrect.';
+      else errEl.textContent='Erreur: '+e.message;
+    });
+  } else {
+    fbAuth.createUserWithEmailAndPassword(email,pwd).catch(function(e){
+      document.getElementById('authSubmit').textContent='Créer mon compte';
+      if(e.code==='auth/email-already-in-use')errEl.textContent='Cet email est déjà utilisé.';
+      else errEl.textContent='Erreur: '+e.message;
+    });
+  }
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.getElementById('authScreen').style.display!=='none')authSubmit();
+});
+
+function signOut(){
+  if(confirm('Se déconnecter ?'))fbAuth.signOut();
+}
+
+// FIRESTORE SAVE / LOAD
+function saveData(){
+  if(!currentUser){
+    // fallback localStorage
+    try{localStorage.setItem('gladder_v1',JSON.stringify({daymap:daymap,recipes_custom:recipes.filter(function(r){return r.id>=300;})}));}catch(e){}
+    return;
+  }
+  setSyncStatus('💾 Sauvegarde...');
+  if(saveTimeout)clearTimeout(saveTimeout);
+  saveTimeout=setTimeout(function(){
+    var data={
+      daymap:daymap,
+      recipes_custom:recipes.filter(function(r){return r.id>=300;}),
+      saved_at:Date.now()
+    };
+    db.collection('users').doc(currentUser.uid).set(data).then(function(){
+      setSyncStatus('✓ Sauvegardé');
+      setTimeout(function(){setSyncStatus('');},2000);
+    }).catch(function(e){setSyncStatus('⚠️ Erreur sauvegarde');console.error(e);});
+  },1200);
+}
+
+function loadDataFromFirebase(){
+  if(!currentUser)return;
+  setSyncStatus('Chargement...');
+  db.collection('users').doc(currentUser.uid).get().then(function(doc){
+    if(doc.exists){
+      var data=doc.data();
+      applyLoadedData(data);
     }
-    // Restore custom recipes
-    if (data.recipes_custom && data.recipes_custom.length > 0) {
-      for (var ri = 0; ri < data.recipes_custom.length; ri++) {
-        recipes.push(data.recipes_custom[ri]);
-        if (data.recipes_custom[ri].id >= newRecId) {
-          newRecId = data.recipes_custom[ri].id + 1;
-        }
+    setSyncStatus('');
+    getDay(cur);render();
+  }).catch(function(e){
+    setSyncStatus('⚠️ Erreur chargement');
+    getDay(cur);render();
+  });
+}
+
+function applyLoadedData(data){
+  if(data.daymap){
+    Object.keys(data.daymap).forEach(function(k){
+      var d=data.daymap[k];
+      if(d.meals)d.meals.forEach(function(m){m.open=false;m.sf=null;m.sr=null;m.sv='';});
+      daymap[k]=d;
+    });
+  }
+  if(data.recipes_custom&&data.recipes_custom.length){
+    data.recipes_custom.forEach(function(r){
+      if(!recipes.some(function(x){return x.id===r.id;})){
+        recipes.push(r);
+        if(r.id>=newRecId)newRecId=r.id+1;
       }
-    }
-  } catch(e) { /* corrupted data, ignore */ }
+    });
+  }
+}
+
+function loadData(){
+  // fallback localStorage uniquement si pas connecté
+  try{
+    var raw=localStorage.getItem('gladder_v1');
+    if(!raw)return;
+    applyLoadedData(JSON.parse(raw));
+  }catch(e){}
+}
+
+function setSyncStatus(msg){
+  var el=document.getElementById('syncIndicator');
+  if(el)el.textContent=msg;
 }
 
 
@@ -719,55 +844,25 @@ function getWEB(d){
 function getWEU(wm){var t=0;for(var i=0;i<7;i++){var k=dk(addD(dfk(wm),i));if(daymap[k])t+=daymap[k].ec.reduce(function(s,e){return s+e.kcal;},0);}return Math.round(t);}
 
 // ═══════════════════════════════════════
-// BOTTOM SHEET SUGGESTIONS
+// BOTTOM SHEET
 // ═══════════════════════════════════════
-var bsSheet=null,bsOverlay=null,bsList=null,bsTitle=null;
-function bsInit(){
-  if(!bsSheet){
-    bsSheet=document.getElementById('bsSheet');
-    bsOverlay=document.getElementById('bsOverlay');
-    bsList=document.getElementById('bsList');
-    bsTitle=document.getElementById('bsTitle');
-  }
-}
-function posDrop(){}// no-op, kept for compat
+var _bs=null,_bso=null,_bsl=null,_bst=null;
+function bsI(){if(!_bs){_bs=document.getElementById('bsSheet');_bso=document.getElementById('bsOverlay');_bsl=document.getElementById('bsList');_bst=document.getElementById('bsTitle');}}
+function posDrop(){}
 function showDrop(mi,m,el){
-  bsInit();
-  gacMi=mi;gacM=m;
-  var foods=m.filter(function(x){return x._t!=='rec';});
-  var recs=m.filter(function(x){return x._t==='rec';});
+  bsI();gacMi=mi;gacM=m;
   var html='';
-  if(foods.length){
-    foods.forEach(function(x){
-      var idx=m.indexOf(x);
-      html+='<div class="acrow" ontouchstart="" onclick="pickI('+idx+')"><span>'+x.name+'</span><span class="actag" style="background:'+CV[x.cat]+'18;color:'+CV[x.cat]+';">'+CL[x.cat]+'</span></div>';
-    });
-  }
-  if(recs.length){
-    if(foods.length) html+='<div style="height:1px;background:var(--border);"></div>';
-    recs.forEach(function(x){
-      var idx=m.indexOf(x);
-      var bs=bsS(x.bilan);
-      html+='<div class="acrow" ontouchstart="" onclick="pickI('+idx+')"><span>🍳 '+x.name+'</span><span class="artag">'+bs+'/part</span></div>';
-    });
-  }
-  bsList.innerHTML=html;
-  bsTitle.textContent=m.length+' résultat'+(m.length>1?'s':'');
-
-  // Position au-dessus du clavier iOS
-  var kh=0;
-  if(window.visualViewport){kh=window.innerHeight-window.visualViewport.height-window.visualViewport.offsetTop;}
-  bsSheet.style.bottom=Math.max(0,kh)+'px';
-
-  bsSheet.classList.add('open');
-  bsOverlay.classList.add('open');
+  m.forEach(function(x,i){
+    if(x._t==='rec'){var bs=bsS(x.bilan);html+='<div class="acrow" onclick="pickI('+i+')"><span>🍳 '+x.name+'</span><span class="artag">'+bs+'/part</span></div>';}
+    else{html+='<div class="acrow" onclick="pickI('+i+')"><span>'+x.name+'</span><span class="actag" style="background:'+CV[x.cat]+'22;color:'+CV[x.cat]+';">'+CL[x.cat]+'</span></div>';}
+  });
+  _bsl.innerHTML=html;
+  _bst.textContent=m.length+' résultat'+(m.length>1?'s':'');
+  var kh=window.visualViewport?Math.max(0,window.innerHeight-window.visualViewport.height):0;
+  _bs.style.bottom=kh+'px';
+  _bs.classList.add('open');_bso.classList.add('open');
 }
-function hideDrop(){
-  bsInit();
-  bsSheet.classList.remove('open');
-  bsOverlay.classList.remove('open');
-  gacMi=null;
-}
+function hideDrop(){bsI();_bs.classList.remove('open');_bso.classList.remove('open');gacMi=null;}
 function pickI(i){
   var x=gacM[i];if(!x||gacMi===null)return;
   var meal=getDay(cur).meals[gacMi];
@@ -776,6 +871,7 @@ function pickI(i){
   hideDrop();render();
   if(x._t==='food'&&x.cat!=='V')setTimeout(function(){var q=document.getElementById('q-'+gacMi);if(q)q.focus();},40);
 }
+if(window.visualViewport){window.visualViewport.addEventListener('resize',function(){if(_bs&&_bs.classList.contains('open')){var kh=Math.max(0,window.innerHeight-window.visualViewport.height);_bs.style.bottom=kh+'px';}});}
 
 // ═══════════════════════════════════════
 // RENDER SEMAINE
@@ -789,7 +885,7 @@ function renderWeek(){
 function shiftW(dir){
   wOff+=dir;var bm=getMon(TODAY),dm=addD(bm,wOff*7),ds=addD(dm,6);
   if(dk(cur)<dk(dm)||dk(cur)>dk(ds))cur=new Date(dm);
-  loadData();getDay(cur);render();saveData();
+  getDay(cur);render();
 }
 
 // ═══════════════════════════════════════
@@ -846,8 +942,7 @@ function renderMeals(){
         var r2=sr.recipe,pts=sr.parts;
         fs='<div class="recbox"><div class="recbox-name">🍳 '+r2.name+'</div><div class="recbox-bilan">'+bsL(r2.bilan)+' / part'+(r2.note?' · '+r2.note:'')+'</div><div class="recbox-row"><div class="parts-ctrl"><button class="pb" onmousedown="chgP('+mi+',-1)">−</button><span class="pval">'+pts+'</span><button class="pb" onmousedown="chgP('+mi+',1)">+</button><span class="plab">part'+(pts>1?'s':'')+'</span></div><button class="recadd-btn" onmousedown="addRecE('+mi+')">Ajouter</button></div></div>';
       }else if(sf&&sf.cat==='V'){
-        fs='<div class="vegbox"><div><div style="font-size:13px;font-weight:600;color:#7bb89a;">🥦 Légumes</div><div style="font-size:11px;color:#a89890;margin-top:1px;">Saisir librement, ex: tomates, salade, concombre</div></div></div>'
-          +'<div class="qty-wrap" style="margin-top:6px;"><input type="text" placeholder="Ex: tomates, salade, concombre" id="vq-'+mi+'" style="flex:1;font-size:13px;padding:9px 12px;border-radius:12px;border:1.5px solid var(--accent2);background:#f6fdf9;font-family:var(--font);outline:none;" onkeydown="if(event.key===\'Enter\')addVeg('+mi+')"/><button class="sub-btn" style="background:rgba(123,184,154,.15);border-color:var(--accent2);color:var(--green);" onclick="addVeg('+mi+')">Ajouter</button></div>';
+        fs='<div style="background:rgba(123,184,154,.1);border-radius:12px;padding:9px 13px;margin-top:6px;"><div style="font-size:13px;font-weight:600;color:#7bb89a;">🥦 Légumes — à volonté</div><div style="font-size:11px;color:#a89890;margin-top:1px;">Saisissez librement, ex: tomates, salade, concombre</div></div><div class="qty-wrap"><input type="text" placeholder="Ex: tomates, salade, concombre" id="vq-'+mi+'" style="flex:1;font-size:13px;padding:9px 12px;border-radius:12px;border:1.5px solid var(--accent2);background:#f6fdf9;font-family:var(--font);outline:none;" onkeydown="if(event.key===\'Enter\')addVeg('+mi+')"/><button class="sub-btn" onclick="addVeg('+mi+')">Ajouter</button></div>';
       }else if(sf){
         fs='<div class="sfbar"><span class="sfname">'+sf.name+'</span><button class="sfclear" onclick="clearSF('+mi+')">✕</button></div><div class="hint-txt">1 case = '+sf.per+' '+sf.unit+'</div><div class="qty-wrap"><input type="number" placeholder="Quantité" min="0" step="any" id="q-'+mi+'" onkeydown="if(event.key===\'Enter\')addE('+mi+')"/><span class="ulab">'+sf.unit+'</span><button class="sub-btn" onclick="addE('+mi+')">Ajouter</button></div>';
       }
@@ -931,13 +1026,12 @@ function onEsrch(val){
   var nv=nrm(val),m=EF.filter(function(f){return nrm(f.name).includes(nv);}).slice(0,8);
   if(!m.length){hideDrop();return;}
   eacM=m;gacMi='ec';
-  bsInit();
-  bsList.innerHTML=m.map(function(f,i){
-    return'<div class="acrow" ontouchstart="" onclick="pickEc('+i+')"><span>'+f.name+'</span><span style="font-size:12px;color:var(--text3);">'+f.kcal+' kcal/'+f.unit+'</span></div>';
-  }).join('');
-  bsTitle.textContent=m.length+' résultat'+(m.length>1?'s':'');
-  bsSheet.classList.add('open');
-  bsOverlay.classList.add('open');
+  bsI();
+  _bsl.innerHTML=m.map(function(f,i){return'<div class="acrow" onclick="pickEc('+i+')"><span>'+f.name+'</span><span style="font-size:12px;color:var(--text3);">'+f.kcal+' kcal/'+f.unit+'</span></div>';}).join('');
+  _bst.textContent=m.length+' résultat'+(m.length>1?'s':'');
+  var kh=window.visualViewport?Math.max(0,window.innerHeight-window.visualViewport.height):0;
+  _bs.style.bottom=kh+'px';
+  _bs.classList.add('open');_bso.classList.add('open');
 }
 function pickEc(i){var f=eacM[i];if(!f)return;getDay(cur).ecf=f;var el=document.getElementById('esrch');if(el)el.value=f.name;if(document.getElementById('ehint'))document.getElementById('ehint').textContent=f.kcal+' kcal / '+f.unit;if(document.getElementById('eunit'))document.getElementById('eunit').textContent=f.unit;hideDrop();setTimeout(function(){var el2=document.getElementById('eqty');if(el2)el2.focus();},30);}
 function addEcL(){var day=getDay(cur);var kcal=parseFloat(document.getElementById('ekcal').value);if(!kcal||kcal<=0)return;var lab=document.getElementById('elab').value.trim()||'Écart';day.ec.push({id:idc++,name:lab,kcal:kcal});day.eco=false;render();saveData();}
@@ -946,15 +1040,6 @@ function delEc(id){var day=getDay(cur);day.ec=day.ec.filter(function(e){return e
 
 document.addEventListener('mousedown',function(e){if(!e.target.closest('#bsSheet')&&!e.target.closest('.fld'))hideDrop();});
 
-// Repositionne la bottom sheet quand le clavier iOS apparaît
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',function(){
-    if(bsSheet&&bsSheet.classList.contains('open')){
-      var kh=window.innerHeight-window.visualViewport.height-window.visualViewport.offsetTop;
-      bsSheet.style.bottom=Math.max(0,kh)+'px';
-    }
-  });
-}
 // ═══════════════════════════════════════
 // RÉFÉRENCE
 // ═══════════════════════════════════════
@@ -1005,15 +1090,53 @@ function renderRecList(k){
 }
 function togRec(id){for(var i=0;i<recipes.length;i++){if(recipes[i].id===id){recipes[i]._o=!recipes[i]._o;break;}}if(curRecCat)renderRecList(curRecCat);}
 function delRec(id){recipes=recipes.filter(function(r){return r.id!==id;});if(curRecCat)renderRecList(curRecCat);renderRecHome();saveData();}
-function openNewRec(){['bP','bL','bG','bF','bS'].forEach(function(id){document.getElementById(id).value='0';});document.getElementById('rname').value='';document.getElementById('ring').value='';document.getElementById('rprep').value='';document.getElementById('recmodal').classList.add('open');}
+var tempIngs=[];
+function addIng(){
+  var n=document.getElementById('ringName').value.trim();
+  var q=document.getElementById('ringQty').value.trim();
+  if(!n||!q){alert('Remplissez le nom et la quantité.');return;}
+  tempIngs.push({n:n,q:q});
+  document.getElementById('ringName').value='';
+  document.getElementById('ringQty').value='';
+  document.getElementById('ringName').focus();
+  renderIngList();
+}
+function removeIng(i){tempIngs.splice(i,1);renderIngList();}
+function renderIngList(){
+  var el=document.getElementById('ingList');if(!el)return;
+  if(!tempIngs.length){el.innerHTML='';return;}
+  el.innerHTML='<div style="background:#f6fdf9;border-radius:10px;padding:4px 12px;border:1px solid var(--border);margin-top:8px;">'+
+    tempIngs.map(function(x,i){
+      return'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border);">'+
+        '<span>'+x.q+' '+x.n+'</span>'+
+        '<button onclick="removeIng('+i+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px;">&#x2715;</button>'+
+        '</div>';
+    }).join('')+'</div>';
+}
+function openNewRec(){
+  tempIngs=[];
+  ['bP','bL','bG','bF','bS'].forEach(function(id){document.getElementById(id).value='0';});
+  document.getElementById('rname').value='';
+  document.getElementById('ringName').value='';
+  document.getElementById('ringQty').value='';
+  document.getElementById('rprep').value='';
+  document.getElementById('rcat').value='mes';
+  renderIngList();
+  document.getElementById('recmodal').classList.add('open');
+}
 function closeRecModal(e){if(!e||e.target===document.getElementById('recmodal'))document.getElementById('recmodal').classList.remove('open');}
 function saveRec(){
-  var name=document.getElementById('rname').value.trim();if(!name)return;
+  var name=document.getElementById('rname').value.trim();
+  if(!name){alert('Le nom est obligatoire.');return;}
+  if(!tempIngs.length){alert('Ajoutez au moins un ingrédient.');return;}
   var cat=document.getElementById('rcat').value,bilan={};
   ['P','L','G','F','S'].forEach(function(k){var v=parseFloat(document.getElementById('b'+k).value)||0;if(v>0)bilan[k]=v;});
-  var ing=document.getElementById('ring').value.trim(),prep=document.getElementById('rprep').value.trim();
+  var ing=tempIngs.map(function(x){return x.q+' '+x.n;}).join(', ');
+  var prep=document.getElementById('rprep').value.trim();
   recipes.push({id:newRecId++,cat:cat,name:name,bilan:bilan,ing:ing,prep:prep,note:'',_o:false});
-  document.getElementById('recmodal').classList.remove('open');renderRecHome();saveData();if(curRecCat)renderRecList(curRecCat);
+  tempIngs=[];
+  document.getElementById('recmodal').classList.remove('open');
+  renderRecHome();saveData();if(curRecCat)renderRecList(curRecCat);
 }
 
 // ═══════════════════════════════════════
@@ -1038,7 +1161,8 @@ setTimeout(function(){
   setTimeout(function(){s.style.display='none';},400);
 },900);
 
-getDay(cur);render();
+getDay(cur);
+initFirebase();
 
 // ═══════════════════════════════════════
 // EXPORT SEMAINIER XLSX
@@ -1063,180 +1187,89 @@ function _genererXLSX() {
   var CATS_LBLS   = ['Protéines','Laitages','Matières grasses','Légumes','Fruits','Pain/féculents'];
   var CATS_QUOTAS2= {P:6,L:3,G:3,V:null,F:3,S:4};
 
-  // Couleur pastel par jour (ARGB)
-  var JOUR_COLORS = [
-    'FFe8d5f5', // Lundi — violet pastel
-    'FFd5e8f5', // Mardi — bleu pastel
-    'FFd5f5e8', // Mercredi — vert pastel
-    'FFf5f0d5', // Jeudi — jaune pastel
-    'FFf5ddd5', // Vendredi — pêche pastel
-    'FFd5eef5', // Samedi — cyan pastel
-    'FFf5d5e8'  // Dimanche — rose pastel
-  ];
-  var JOUR_FG = [
-    'FF6a3d9a','FF1a6fa8','FF1a8a5a','FF8a7a1a','FF9a4a2a','FF1a6a8a','FF8a2a6a'
-  ];
+  // Couleur pastel par jour (fond header + texte blanc)
+  var JOUR_BG=['FFc9b3e8','FFb3cce8','FFb3e8d0','FFe8e0b3','FFe8c9b3','FFb3e0e8','FFe8b3cc'];
 
   // Couleurs par catégorie
-  var CAT_BG = {P:'FFdbeafe',L:'FFf3f4f6',G:'FFdcfce7',V:'FFe8f8f0',F:'FFfee2e2',S:'FFfef9c3'};
-  var CAT_FG = {P:'FF3b82f6',L:'FF6b7280',G:'FF16a34a',V:'FF15803d',F:'FFdc2626',S:'FFca8a04'};
+  var CAT_BG={P:'FFdbeafe',L:'FFf3f4f6',G:'FFdcfce7',V:'FFe8f8f0',F:'FFfee2e2',S:'FFfef9c3'};
+  var CAT_FG={P:'FF3b82f6',L:'FF6b7280',G:'FF16a34a',V:'FF15803d',F:'FFdc2626',S:'FFca8a04'};
 
-  function makeBoxes(used, quota) {
-    if (quota === null) return 'à volonté';
-    var s = '';
-    for (var i = 0; i < quota; i++) {
-      s += (i < used) ? '■' : '□';
-      if (i < quota - 1) s += ' ';
-    }
-    s += '  ' + used + '/' + quota;
-    return s;
-  }
-  function joinItems(items) {return items&&items.length?items.join(' + '):'';}
+  function makeBoxes(used,quota){if(quota===null)return'à volonté';var s='';for(var i=0;i<quota;i++){s+=(i<used)?'■':'□';if(i<quota-1)s+=' ';}s+='  '+used+'/'+quota;return s;}
+  function joinItems(items){return items&&items.length?items.join(' + '):'';}
+  function st(font,bgRgb,align){var o={};if(font)o.font=font;if(bgRgb)o.fill={patternType:'solid',fgColor:{rgb:bgRgb}};if(align)o.alignment=align;return o;}
 
-  var bm=getMon(cur), ds=addD(bm,6);
+  var bm=getMon(cur);
   function fmtDate(d){return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();}
-  var weekLabel='du '+fmtDate(bm)+' au '+fmtDate(ds);
+  var weekLabel='du '+fmtDate(bm)+' au '+fmtDate(addD(bm,6));
 
   var wb=XLSX.utils.book_new();
-
-  function mkS(font,fill,align){
-    var s={};
-    if(font)s.font=font;
-    if(fill)s.fill={patternType:'solid',fgColor:{rgb:fill}};
-    if(align)s.alignment=align;
-    return s;
-  }
-
-  var ws={};
-  ws['!merges']=[];
-  var rowNum=1;
+  var ws={};ws['!merges']=[];
+  var row=1;
 
   // Titre
-  ws[XLSX.utils.encode_cell({r:0,c:0})]={
-    v:'Gladder — Semainier '+weekLabel,
-    s:mkS({bold:true,size:13,color:{rgb:'FF5c2d8a'}},
-          'FFf0e8fa',
-          {horizontal:'left',vertical:'center'})
-  };
+  ws[XLSX.utils.encode_cell({r:0,c:0})]={v:'Gladder — Semainier '+weekLabel,s:st({bold:true,size:13,color:{rgb:'FF5c2d8a'}},'FFf0e8fa',{horizontal:'left',vertical:'center'})};
   ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:7}});
-  rowNum=2;
+  row=2;
 
   for(var ji=0;ji<JOURS_FR.length;ji++){
-    var jour=JOURS_FR[ji];
-    var jourBg=JOUR_COLORS[ji];
-    var jourFg=JOUR_FG[ji];
-    var hdrRow=rowNum-1;
-
+    var jourBg=JOUR_BG[ji];
+    var hdrRow=row-1;
     var jourDate=addD(bm,ji);
-    var jourKey=dk(jourDate);
-    var dayData=daymap[jourKey]||{meals:[],con:{P:0,L:0,G:0,F:0,S:0},ec:[]};
+    var dayData=daymap[dk(jourDate)]||{meals:[],con:{P:0,L:0,G:0,F:0,S:0},ec:[]};
     var con=dayData.con||{};
 
-    var repasData={};
-    REPAS_KEYS2.forEach(function(rk){repasData[rk]={P:[],L:[],G:[],V:[],F:[],S:[]};});
-
+    // Collecte des aliments par repas × catégorie
+    var rd={};REPAS_KEYS2.forEach(function(rk){rd[rk]={P:[],L:[],G:[],V:[],F:[],S:[]};});
     if(dayData.meals){
-      var mealIdxMap={pdej:0,coll_matin:1,dejeuner:2,coll_apm:3,diner:4,coll_soir:5};
-      Object.keys(mealIdxMap).forEach(function(rk){
-        var mi=mealIdxMap[rk];
-        var meal=dayData.meals[mi];
-        if(!meal||!meal.entries)return;
+      var mim={pdej:0,coll_matin:1,dejeuner:2,coll_apm:3,diner:4,coll_soir:5};
+      Object.keys(mim).forEach(function(rk){
+        var meal=dayData.meals[mim[rk]];if(!meal||!meal.entries)return;
         meal.entries.forEach(function(e){
-          if(e._t==='rec'){
-            var bilan=e.bilanTotal||e.bilan||{};
-            Object.keys(bilan).forEach(function(catK){
-              if(bilan[catK]>0&&repasData[rk][catK]!==undefined)
-                repasData[rk][catK].push(e.parts+'part '+(e.parts>1?'s ':'')+e.name);
-            });
-          }else if(e.cat&&e.cat!=='recipe'){
-            if(repasData[rk][e.cat]!==undefined){
-              var txt=e.cat==='V'?e.name:e.qty+' '+e.unit+' '+e.name;
-              repasData[rk][e.cat].push(txt);
-            }
-          }
+          if(e._t==='rec'){var b=e.bilanTotal||e.bilan||{};Object.keys(b).forEach(function(k){if(b[k]>0&&rd[rk][k]!==undefined)rd[rk][k].push(e.parts+'pt '+e.name);});}
+          else if(e.cat&&e.cat!=='recipe'&&rd[rk][e.cat]!==undefined){rd[rk][e.cat].push(e.cat==='V'?e.name:e.qty+' '+e.unit+' '+e.name);}
         });
       });
     }
 
-    // Header jour — couleur du jour, gras
-    var hCols=[jour,'','Petit-déjeuner','Collation','Déjeuner','Collation','Dîner','Collation soir'];
+    // Header jour — couleur pastel, texte blanc, gras
+    var hCols=[JOURS_FR[ji],'','Petit-déj.','Collation matin','Déjeuner','Collation APM','Dîner','Collation soir'];
     for(var c=0;c<hCols.length;c++){
-      var cr=XLSX.utils.encode_cell({r:hdrRow,c:c});
-      ws[cr]={
-        v:hCols[c],
-        s:mkS(
-          {bold:true,size:c===0?12:9,color:{rgb:'FFFFFFFF'}},
-          jourBg.replace('FF','FF').replace(/^FF/,''),// on utilise jourBg directement
-          {horizontal:c===0?'left':'center',vertical:'center'}
-        )
-      };
-      // forcer couleur de fond correcte
-      ws[cr].s.fill={patternType:'solid',fgColor:{rgb:jourBg}};
-      ws[cr].s.font.color={rgb:'FFFFFFFF'};
-      if(c===0)ws[cr].s.font.size=12;
+      var cel=XLSX.utils.encode_cell({r:hdrRow,c:c});
+      ws[cel]={v:hCols[c],s:st({bold:true,size:c===0?12:9,color:{rgb:'FFFFFFFF'}},jourBg,{horizontal:c===0?'left':'center',vertical:'center'})};
     }
     ws['!merges'].push({s:{r:hdrRow,c:0},e:{r:hdrRow,c:1}});
-    rowNum++;
+    row++;
 
-    // Lignes catégories
+    // Lignes catégories — gras + couleur catégorie
     for(var ci=0;ci<CATS_KEYS2.length;ci++){
-      var catKey=CATS_KEYS2[ci];
-      var catLbl=CATS_LBLS[ci];
-      var quota=CATS_QUOTAS2[catKey];
-      var used=(catKey!=='V')?(con[catKey]||0):0;
-      var bgRgb=CAT_BG[catKey];
-      var fgRgb=CAT_FG[catKey];
-      var catRow=rowNum-1;
-
-      ws[XLSX.utils.encode_cell({r:catRow,c:0})]={
-        v:catLbl,
-        s:mkS({bold:true,color:{rgb:fgRgb}},bgRgb,{horizontal:'left',vertical:'center'})
-      };
-      ws[XLSX.utils.encode_cell({r:catRow,c:1})]={
-        v:makeBoxes(used,quota),
-        s:mkS({bold:true,color:{rgb:fgRgb}},bgRgb,{horizontal:'center',vertical:'center',wrapText:true})
-      };
+      var catK=CATS_KEYS2[ci],catR=row-1;
+      var used=(catK!=='V')?(con[catK]||0):0;
+      ws[XLSX.utils.encode_cell({r:catR,c:0})]={v:CATS_LBLS[ci],s:st({bold:true,color:{rgb:CAT_FG[catK]}},CAT_BG[catK],{horizontal:'left',vertical:'center'})};
+      ws[XLSX.utils.encode_cell({r:catR,c:1})]={v:makeBoxes(used,CATS_QUOTAS2[catK]),s:st({bold:true,color:{rgb:CAT_FG[catK]}},CAT_BG[catK],{horizontal:'center',vertical:'center',wrapText:true})};
       for(var ri=0;ri<REPAS_KEYS2.length;ri++){
-        var rk=REPAS_KEYS2[ri];
-        var items=repasData[rk][catKey]||[];
-        var txt=joinItems(items);
-        var cellr=XLSX.utils.encode_cell({r:catRow,c:2+ri});
-        ws[cellr]={
-          v:txt||'',
-          s:txt
-            ?mkS({color:{rgb:'FF1a1410'}},bgRgb,{horizontal:'center',vertical:'center',wrapText:true})
-            :mkS({color:{rgb:'FF1a1410'}},null,{horizontal:'center',vertical:'center',wrapText:true})
-        };
+        var txt=joinItems(rd[REPAS_KEYS2[ri]][catK]||[]);
+        ws[XLSX.utils.encode_cell({r:catR,c:2+ri})]={v:txt||'',s:st({color:{rgb:'FF1a1410'}},txt?CAT_BG[catK]:null,{horizontal:'center',vertical:'center',wrapText:true})};
       }
-      rowNum++;
+      row++;
     }
-    rowNum++; // ligne vide
+    row++; // ligne vide
   }
 
   // Écarts
-  var ecRow=rowNum-1;
-  var totalEc=0;
-  for(var ji2=0;ji2<JOURS_FR.length;ji2++){
-    var d2=daymap[dk(addD(bm,ji2))];
-    if(d2)totalEc+=d2.ec.reduce(function(s,e){return s+e.kcal;},0);
-  }
-  ws[XLSX.utils.encode_cell({r:ecRow,c:0})]={v:'Écarts :',s:mkS({bold:true,color:{rgb:'FFc0392b'}},'FFffe8e8',{horizontal:'center',vertical:'center'})};
-  ws[XLSX.utils.encode_cell({r:ecRow,c:1})]={v:Math.round(totalEc)+' / 500 kcal',s:mkS({bold:true,color:{rgb:'FFc0392b'}},'FFffe8e8',{horizontal:'center',vertical:'center'})};
-  for(var ji3=0;ji3<Math.min(6,JOURS_FR.length);ji3++){
+  var ecRow=row-1,totalEc=0;
+  for(var ji2=0;ji2<7;ji2++){var d2=daymap[dk(addD(bm,ji2))];if(d2)totalEc+=d2.ec.reduce(function(s,e){return s+e.kcal;},0);}
+  ws[XLSX.utils.encode_cell({r:ecRow,c:0})]={v:'Écarts :',s:st({bold:true,color:{rgb:'FFc0392b'}},'FFffe8e8',{horizontal:'center',vertical:'center'})};
+  ws[XLSX.utils.encode_cell({r:ecRow,c:1})]={v:Math.round(totalEc)+' / 500 kcal',s:st({bold:true,color:{rgb:'FFc0392b'}},'FFffe8e8',{horizontal:'center',vertical:'center'})};
+  for(var ji3=0;ji3<7;ji3++){
     var d3=daymap[dk(addD(bm,ji3))];
     var ec3=d3?Math.round(d3.ec.reduce(function(s,e){return s+e.kcal;},0)):0;
-    ws[XLSX.utils.encode_cell({r:ecRow,c:2+ji3})]={
-      v:ec3>0?JOURS_FR[ji3].slice(0,3)+' : '+ec3+' kcal':'',
-      s:mkS({size:8,color:{rgb:ec3>0?'FFc0392b':'FF999999'}},'FFffe8e8',{horizontal:'center',vertical:'center'})
-    };
+    ws[XLSX.utils.encode_cell({r:ecRow,c:2+ji3})]={v:ec3>0?JOURS_FR[ji3].slice(0,3)+' : '+ec3+' kcal':'',s:st({size:8,color:{rgb:ec3>0?'FFc0392b':'FF999999'}},'FFffe8e8',{horizontal:'center',vertical:'center'})};
   }
 
   ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:ecRow,c:7}});
-  ws['!cols']=[{wpx:140},{wpx:95},{wpx:125},{wpx:70},{wpx:130},{wpx:80},{wpx:125},{wpx:80}];
-
+  ws['!cols']=[{wpx:140},{wpx:95},{wpx:110},{wpx:90},{wpx:110},{wpx:90},{wpx:110},{wpx:100}];
   XLSX.utils.book_append_sheet(wb,ws,'Semainier');
-  var filename='Gladder_semainier_'+fmtDate(bm).replace(/\//g,'-')+'.xlsx';
-  XLSX.writeFile(wb,filename);
+  XLSX.writeFile(wb,'Gladder_semainier_'+fmtDate(bm).replace(/\//g,'-')+'.xlsx');
 }
 
 
