@@ -419,7 +419,7 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 </div>
 
 <!-- Auth Screen -->
-<div class="auth-screen" id="authScreen">
+<div class="auth-screen" id="authScreen" style="display:flex;">
   <div class="auth-logo">Gladder</div>
   <div class="auth-sub">Suivi nutritionnel</div>
   <div class="auth-card">
@@ -443,7 +443,7 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   <div class="bs-list" id="bsList"></div>
 </div>
 
-<div class="app">
+<div class="app" id="mainApp" style="display:none;">
   <div class="scroll-area" id="scroll-area">
 
     <!-- ── PAGE JOURNAL ── -->
@@ -665,11 +665,13 @@ function initFirebase(){
     if(user){
       currentUser=user;
       document.getElementById('authScreen').style.display='none';
+      document.getElementById('mainApp').style.display='flex';
       document.getElementById('userEmail').textContent=user.email;
       loadDataFromFirebase();
     } else {
       currentUser=null;
       document.getElementById('authScreen').style.display='flex';
+      document.getElementById('mainApp').style.display='none';
     }
   });
 }
@@ -1157,9 +1159,8 @@ function switchTab(tab){
 // ═══════════════════════════════════════
 setTimeout(function(){
   var s=document.getElementById('splash');
-  s.style.opacity='0';
-  setTimeout(function(){s.style.display='none';},400);
-},900);
+  if(s)s.style.display='none';
+},100);
 
 getDay(cur);
 initFirebase();
