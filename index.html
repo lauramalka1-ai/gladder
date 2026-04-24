@@ -338,6 +338,91 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 .ntab.active{color:var(--accent);}
 .nicon{font-size:21px;}
 
+/* MON SUIVI */
+.suivi-card{
+  background:var(--card);border-radius:16px;
+  padding:14px 16px;margin-bottom:12px;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.suivi-section-label{
+  font-size:12px;color:var(--text2);font-weight:600;
+  margin-bottom:8px;
+}
+.suivi-add-row{display:flex;gap:8px;align-items:center;}
+.suivi-input{
+  flex:1;padding:9px 10px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-size:14px;background:#faf7ff;color:var(--text);
+  font-family:var(--font);outline:none;
+  -webkit-appearance:none;appearance:none;
+}
+.suivi-input:focus{border-color:var(--accent);}
+.suivi-input-kg{width:78px;flex:none;text-align:center;}
+.suivi-add-btn{
+  padding:9px 16px;background:var(--purple);color:#fff;
+  border:none;border-radius:10px;font-size:18px;font-weight:600;
+  cursor:pointer;line-height:1;
+}
+.suivi-add-btn:active{opacity:.8;}
+.suivi-period-row{display:flex;gap:6px;margin-bottom:12px;}
+.suivi-period{
+  flex:1;padding:8px 4px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,.7);
+  border:1.5px solid var(--border);border-radius:10px;
+  color:var(--text2);cursor:pointer;
+  font-family:var(--font);
+}
+.suivi-period.active{
+  background:var(--purple);border-color:var(--purple);color:#fff;
+}
+.suivi-chart-nav{
+  display:flex;justify-content:flex-end;align-items:center;
+  gap:8px;margin-bottom:10px;
+}
+.suivi-arrow{
+  width:28px;height:28px;
+  border:1.5px solid var(--border);background:#faf7ff;
+  border-radius:8px;font-size:16px;cursor:pointer;
+  color:var(--purple);display:flex;align-items:center;justify-content:center;
+  padding:0;line-height:1;font-weight:600;
+}
+.suivi-arrow:active{opacity:.6;}
+.suivi-arrow:disabled{opacity:.3;cursor:default;}
+.suivi-period-label{
+  font-size:12px;color:var(--purple);font-weight:600;
+  min-width:120px;text-align:center;
+}
+.suivi-chart{width:100%;}
+.suivi-chart svg{width:100%;height:auto;display:block;}
+.suivi-empty{
+  text-align:center;color:var(--text3);
+  font-size:13px;padding:30px 0;
+}
+.suivi-w-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border:1px solid #f0e6f7;
+  border-radius:10px;margin-bottom:6px;background:#faf7ff;
+}
+.suivi-w-info .w-kg{font-size:14px;font-weight:600;color:var(--text);}
+.suivi-w-info .w-date{font-size:11px;color:var(--text3);margin-top:2px;}
+.suivi-w-actions{display:flex;gap:6px;}
+.suivi-w-btn{
+  width:30px;height:30px;border-radius:8px;
+  background:var(--card);font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  padding:0;
+}
+.suivi-w-edit{border:1.5px solid var(--border);color:var(--purple);}
+.suivi-w-del{border:1.5px solid #f5d0d0;color:var(--red);}
+.suivi-w-total{
+  text-align:center;font-size:11px;color:var(--text3);
+  padding:6px 0 2px;font-style:italic;
+}
+.suivi-w-empty{
+  text-align:center;color:var(--text3);
+  font-size:13px;padding:20px 0;
+}
+
 /* MODAL */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1000;align-items:flex-end;justify-content:center;}
 .modal-ov.open{display:flex;}
@@ -523,6 +608,44 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
       </div>
     </div>
 
+    <!-- ── PAGE MON SUIVI ── -->
+    <div class="page" id="page-suivi">
+      <div style="padding:0 18px 10px">
+        <div class="page-header" style="padding-left:0">Mon suivi</div>
+
+        <div class="suivi-card">
+          <div class="suivi-section-label">Ajouter une mesure</div>
+          <div class="suivi-add-row">
+            <input type="date" id="wdate" class="suivi-input"/>
+            <input type="number" id="wkg" class="suivi-input suivi-input-kg" placeholder="kg" step="0.1" min="0"/>
+            <button class="suivi-add-btn" onclick="addWeight()">+</button>
+          </div>
+        </div>
+
+        <div class="suivi-period-row">
+          <button class="suivi-period" data-p="1" onclick="setPeriod(1)">1 mois</button>
+          <button class="suivi-period active" data-p="3" onclick="setPeriod(3)">3 mois</button>
+          <button class="suivi-period" data-p="6" onclick="setPeriod(6)">6 mois</button>
+          <button class="suivi-period" data-p="12" onclick="setPeriod(12)">1 an</button>
+        </div>
+
+        <div class="suivi-card">
+          <div class="suivi-chart-nav">
+            <button class="suivi-arrow" onclick="navPeriod(-1)">‹</button>
+            <div class="suivi-period-label" id="periodLbl">—</div>
+            <button class="suivi-arrow" onclick="navPeriod(1)">›</button>
+          </div>
+          <div id="weightChart" class="suivi-chart"></div>
+          <div id="weightEmpty" class="suivi-empty" style="display:none">Aucune mesure pour cette période</div>
+        </div>
+
+        <div class="suivi-card">
+          <div class="suivi-section-label">Historique</div>
+          <div id="weightList"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /scroll-area -->
 
   <!-- Bottom Nav -->
@@ -530,6 +653,7 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
     <div class="ntab active" id="tab-journal" onclick="switchTab('journal')"><span class="nicon">📋</span><span>Journal</span></div>
     <div class="ntab" id="tab-ref" onclick="switchTab('ref')"><span class="nicon">📖</span><span>Référence</span></div>
     <div class="ntab" id="tab-rec" onclick="switchTab('rec')"><span class="nicon">🍳</span><span>Recettes</span></div>
+    <div class="ntab" id="tab-suivi" onclick="switchTab('suivi')"><span class="nicon">📊</span><span>Mon suivi</span></div>
   </div>
 </div>
 
@@ -749,7 +873,7 @@ function signOut(){
 function saveData(){
   if(!currentUser){
     // fallback localStorage
-    try{localStorage.setItem('gladder_v1',JSON.stringify({daymap:daymap,recipes_custom:recipes.filter(function(r){return r.id>=300;})}));}catch(e){}
+    try{localStorage.setItem('gladder_v1',JSON.stringify({daymap:daymap,recipes_custom:recipes.filter(function(r){return r.id>=300;}),weights:weights}));}catch(e){}
     return;
   }
   setSyncStatus('💾 Sauvegarde...');
@@ -758,6 +882,7 @@ function saveData(){
     var data={
       daymap:daymap,
       recipes_custom:recipes.filter(function(r){return r.id>=300;}),
+      weights:weights,
       saved_at:Date.now()
     };
     db.collection('users').doc(currentUser.uid).set(data).then(function(){
@@ -798,6 +923,10 @@ function applyLoadedData(data){
         if(r.id>=newRecId)newRecId=r.id+1;
       }
     });
+  }
+  if(data.weights&&data.weights.length){
+    weights=data.weights.slice();
+    weights.forEach(function(w){if(w.id>=weightId)weightId=w.id+1;});
   }
 }
 
@@ -847,6 +976,10 @@ function bsL(b){var p=Object.keys(b||{}).filter(function(k){return b[k]>0;}).map
 // ═══════════════════════════════════════
 var cur=new Date(TODAY),wOff=0,daymap={},idc=0,editId=null;
 var gac=document.getElementById('gac'),gacM=[],gacMi=null,eacM=[];
+var weights=[]; // {id, date:'YYYY-MM-DD', kg:Number}
+var weightId=1;
+var sPeriod=3; // mois affichés: 1, 3, 6, 12
+var sOffset=0; // décalage de période (0 = période la plus récente)
 
 function getDay(d){
   var k=dk(d);
@@ -1167,14 +1300,223 @@ function saveRec(){
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// MON SUIVI - POIDS
+// ═══════════════════════════════════════
+function initSuiviDate(){
+  var inp=document.getElementById('wdate');
+  if(inp&&!inp.value){
+    var t=new Date();
+    var y=t.getFullYear(),m=String(t.getMonth()+1).padStart(2,'0'),d=String(t.getDate()).padStart(2,'0');
+    inp.value=y+'-'+m+'-'+d;
+  }
+}
+function addWeight(){
+  var dInp=document.getElementById('wdate');
+  var kInp=document.getElementById('wkg');
+  var date=dInp.value;
+  var kg=parseFloat(kInp.value);
+  if(!date||!kg||kg<=0||kg>500){return;}
+  // si une entrée existe déjà pour cette date, on la remplace
+  var existing=weights.findIndex(function(w){return w.date===date;});
+  if(existing>=0){
+    weights[existing].kg=Math.round(kg*10)/10;
+  }else{
+    weights.push({id:weightId++,date:date,kg:Math.round(kg*10)/10});
+  }
+  kInp.value='';
+  // reset offset pour voir la dernière période
+  sOffset=0;
+  saveData();
+  renderSuivi();
+}
+function delWeight(id){
+  if(!confirm('Supprimer cette mesure ?'))return;
+  weights=weights.filter(function(w){return w.id!==id;});
+  saveData();
+  renderSuivi();
+}
+function editWeight(id){
+  var w=weights.find(function(x){return x.id===id;});
+  if(!w)return;
+  var nv=prompt('Nouveau poids (kg) pour le '+fmtDateFr(w.date),String(w.kg));
+  if(nv===null)return;
+  var n=parseFloat(nv.replace(',','.'));
+  if(!n||n<=0||n>500){alert('Valeur invalide');return;}
+  w.kg=Math.round(n*10)/10;
+  saveData();
+  renderSuivi();
+}
+function setPeriod(p){
+  sPeriod=p;
+  sOffset=0;
+  document.querySelectorAll('.suivi-period').forEach(function(b){
+    b.classList.toggle('active',parseInt(b.getAttribute('data-p'))===p);
+  });
+  renderSuivi();
+}
+function navPeriod(dir){
+  // dir=-1 : période précédente (passé) / dir=+1 : suivante (futur)
+  var newOff=sOffset-dir; // offset positif = passé
+  if(newOff<0)return; // pas de futur après aujourd'hui
+  sOffset=newOff;
+  renderSuivi();
+}
+function fmtDateFr(iso){
+  // 'YYYY-MM-DD' -> 'D mois YYYY'
+  var p=iso.split('-');
+  var mois=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  return parseInt(p[2])+' '+mois[parseInt(p[1])-1]+' '+p[0];
+}
+function fmtMonthShort(d){
+  var mois=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  return mois[d.getMonth()];
+}
+function getPeriodWindow(){
+  // retourne {start, end} en Date — fenêtre actuelle selon sPeriod et sOffset
+  var end=new Date();
+  end.setHours(23,59,59,999);
+  // décaler vers le passé selon offset
+  end.setMonth(end.getMonth()-sOffset*sPeriod);
+  var start=new Date(end);
+  start.setMonth(start.getMonth()-sPeriod);
+  start.setHours(0,0,0,0);
+  return {start:start,end:end};
+}
+function renderSuivi(){
+  var win=getPeriodWindow();
+  // label de période
+  var lbl;
+  if(sPeriod===12){
+    lbl=(win.start.getFullYear())+' – '+win.end.getFullYear();
+    if(win.start.getFullYear()===win.end.getFullYear())lbl=String(win.end.getFullYear());
+  }else{
+    var sM=fmtMonthShort(win.start),eM=fmtMonthShort(win.end);
+    if(win.start.getFullYear()===win.end.getFullYear()){
+      lbl=sM+' – '+eM+' '+win.end.getFullYear();
+    }else{
+      lbl=sM+' '+win.start.getFullYear()+' – '+eM+' '+win.end.getFullYear();
+    }
+  }
+  document.getElementById('periodLbl').textContent=lbl;
+  // dessiner courbe
+  drawWeightChart(win);
+  // historique
+  renderWeightList();
+}
+function drawWeightChart(win){
+  var box=document.getElementById('weightChart');
+  var emptyEl=document.getElementById('weightEmpty');
+  var startMs=win.start.getTime(),endMs=win.end.getTime();
+  // filtrer poids sur fenêtre
+  var pts=weights.filter(function(w){
+    var t=new Date(w.date+'T12:00:00').getTime();
+    return t>=startMs&&t<=endMs;
+  }).sort(function(a,b){return a.date<b.date?-1:1;});
+  if(pts.length===0){
+    box.innerHTML='';
+    emptyEl.style.display='';
+    return;
+  }
+  emptyEl.style.display='none';
+  // dimensions SVG
+  var W=320,H=180,padL=32,padR=10,padT=18,padB=28;
+  var plotW=W-padL-padR,plotH=H-padT-padB;
+  // bornes Y avec marge
+  var kgs=pts.map(function(p){return p.kg;});
+  var minK=Math.min.apply(null,kgs),maxK=Math.max.apply(null,kgs);
+  var range=maxK-minK;
+  if(range<2)range=2;
+  var pad=range*0.15;
+  var yMin=Math.floor(minK-pad),yMax=Math.ceil(maxK+pad);
+  // 4 lignes horizontales (graduations)
+  var gridLines='';
+  var yLabels='';
+  var nGrid=4;
+  for(var i=0;i<=nGrid;i++){
+    var y=padT+plotH*i/nGrid;
+    var val=Math.round(yMax-(yMax-yMin)*i/nGrid);
+    gridLines+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="#f3eafa" stroke-width="0.5" stroke-dasharray="2,2"/>';
+    yLabels+='<text x="'+(padL-4)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="#aa88c0" font-family="Arial">'+val+'</text>';
+  }
+  // axes
+  var axes='<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" stroke="#e8ddf5" stroke-width="1"/>'+
+           '<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="#e8ddf5" stroke-width="1"/>';
+  // calcul positions points
+  function xPos(dateStr){
+    var t=new Date(dateStr+'T12:00:00').getTime();
+    return padL+plotW*(t-startMs)/(endMs-startMs);
+  }
+  function yPos(kg){
+    return padT+plotH*(yMax-kg)/(yMax-yMin);
+  }
+  var polyPts=pts.map(function(p){return xPos(p.date)+','+yPos(p.kg);}).join(' ');
+  var line=pts.length>1?'<polyline points="'+polyPts+'" fill="none" stroke="#9b72b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>':'';
+  var circles='';
+  pts.forEach(function(p,i){
+    var x=xPos(p.date),y=yPos(p.kg);
+    var isLast=(i===pts.length-1);
+    if(isLast&&pts.length>0){
+      circles+='<circle cx="'+x+'" cy="'+y+'" r="4" fill="#fff" stroke="#9b72b8" stroke-width="2"/>';
+    }else{
+      circles+='<circle cx="'+x+'" cy="'+y+'" r="3" fill="#9b72b8"/>';
+    }
+  });
+  // labels X selon période
+  var xLabels='';
+  var d=new Date(win.start);
+  d.setDate(1);
+  // step en mois selon période
+  var stepMois=sPeriod<=1?1:sPeriod<=3?1:sPeriod<=6?2:3;
+  while(d.getTime()<=endMs){
+    if(d.getTime()>=startMs-86400000){
+      var t=d.getTime();
+      var x=padL+plotW*(t-startMs)/(endMs-startMs);
+      if(x>=padL-2&&x<=W-padR+2){
+        var lbl=fmtMonthShort(d);
+        xLabels+='<text x="'+x+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#aa88c0" font-family="Arial">'+lbl+'</text>';
+      }
+    }
+    d.setMonth(d.getMonth()+stepMois);
+  }
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+
+          axes+gridLines+yLabels+line+circles+xLabels+'</svg>';
+  box.innerHTML=svg;
+}
+function renderWeightList(){
+  var el=document.getElementById('weightList');
+  if(weights.length===0){
+    el.innerHTML='<div class="suivi-w-empty">Aucune mesure enregistrée</div>';
+    return;
+  }
+  // tri du plus récent au plus ancien
+  var sorted=weights.slice().sort(function(a,b){return a.date<b.date?1:-1;});
+  var html='';
+  sorted.forEach(function(w){
+    html+='<div class="suivi-w-item">'+
+            '<div class="suivi-w-info">'+
+              '<div class="w-kg">'+w.kg.toString().replace('.',',')+' kg</div>'+
+              '<div class="w-date">'+fmtDateFr(w.date)+'</div>'+
+            '</div>'+
+            '<div class="suivi-w-actions">'+
+              '<button class="suivi-w-btn suivi-w-edit" onclick="editWeight('+w.id+')">✎</button>'+
+              '<button class="suivi-w-btn suivi-w-del" onclick="delWeight('+w.id+')">×</button>'+
+            '</div>'+
+          '</div>';
+  });
+  html+='<div class="suivi-w-total">— '+sorted.length+' mesure'+(sorted.length>1?'s':'')+' au total —</div>';
+  el.innerHTML=html;
+}
+
 function switchTab(tab){
-  ['journal','ref','rec'].forEach(function(t){
+  ['journal','ref','rec','suivi'].forEach(function(t){
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
     document.getElementById('page-'+t).classList.toggle('active',t===tab);
   });
   document.getElementById('scroll-area').scrollTop=0;
   if(tab==='ref'){renderRef();document.getElementById('refres').innerHTML='';document.getElementById('refinput').value='';document.getElementById('refcats').style.display='';}
   if(tab==='rec')showRecHome();
+  if(tab==='suivi'){initSuiviDate();renderSuivi();}
 }
 
 // ═══════════════════════════════════════
