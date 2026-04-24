@@ -364,16 +364,16 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   cursor:pointer;line-height:1;
 }
 .suivi-add-btn:active{opacity:.8;}
-.suivi-period-row{display:flex;gap:6px;margin-bottom:12px;}
-.suivi-period{
-  flex:1;padding:8px 4px;font-size:12px;font-weight:600;
-  background:rgba(255,255,255,.7);
-  border:1.5px solid var(--border);border-radius:10px;
-  color:var(--text2);cursor:pointer;
-  font-family:var(--font);
+.suivi-range-row{
+  display:flex;gap:6px;align-items:center;margin-bottom:12px;
 }
-.suivi-period.active{
-  background:var(--purple);border-color:var(--purple);color:#fff;
+.suivi-date-range{
+  flex:1;min-width:0;font-size:13px;
+  text-align:center;
+}
+.suivi-range-sep{
+  color:var(--purple);font-size:16px;font-weight:600;
+  flex:none;padding:0 2px;
 }
 .suivi-chart-nav{
   display:flex;justify-content:flex-end;align-items:center;
@@ -622,18 +622,17 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
           </div>
         </div>
 
-        <div class="suivi-period-row">
-          <button class="suivi-period" data-p="1" onclick="setPeriod(1)">1 mois</button>
-          <button class="suivi-period active" data-p="3" onclick="setPeriod(3)">3 mois</button>
-          <button class="suivi-period" data-p="6" onclick="setPeriod(6)">6 mois</button>
-          <button class="suivi-period" data-p="12" onclick="setPeriod(12)">1 an</button>
+        <div class="suivi-range-row">
+          <input type="date" id="dStart" class="suivi-input suivi-date-range" onchange="onRangeChange()"/>
+          <span class="suivi-range-sep">→</span>
+          <input type="date" id="dEnd" class="suivi-input suivi-date-range" onchange="onRangeChange()"/>
         </div>
 
         <div class="suivi-card">
           <div class="suivi-chart-nav">
-            <button class="suivi-arrow" onclick="navPeriod(-1)">‹</button>
+            <button class="suivi-arrow" onclick="navWeek(-1)">‹</button>
             <div class="suivi-period-label" id="periodLbl">—</div>
-            <button class="suivi-arrow" onclick="navPeriod(1)">›</button>
+            <button class="suivi-arrow" onclick="navWeek(1)">›</button>
           </div>
           <div id="weightChart" class="suivi-chart"></div>
           <div id="weightEmpty" class="suivi-empty" style="display:none">Aucune mesure pour cette période</div>
@@ -978,8 +977,7 @@ var cur=new Date(TODAY),wOff=0,daymap={},idc=0,editId=null;
 var gac=document.getElementById('gac'),gacM=[],gacMi=null,eacM=[];
 var weights=[]; // {id, date:'YYYY-MM-DD', kg:Number}
 var weightId=1;
-var sPeriod=3; // mois affichés: 1, 3, 6, 12
-var sOffset=0; // décalage de période (0 = période la plus récente)
+var rangeStart=null, rangeEnd=null; // strings 'YYYY-MM-DD' ou null
 
 function getDay(d){
   var k=dk(d);
@@ -1317,7 +1315,6 @@ function addWeight(){
   var date=dInp.value;
   var kg=parseFloat(kInp.value);
   if(!date||!kg||kg<=0||kg>500){return;}
-  // si une entrée existe déjà pour cette date, on la remplace
   var existing=weights.findIndex(function(w){return w.date===date;});
   if(existing>=0){
     weights[existing].kg=Math.round(kg*10)/10;
@@ -1325,14 +1322,16 @@ function addWeight(){
     weights.push({id:weightId++,date:date,kg:Math.round(kg*10)/10});
   }
   kInp.value='';
-  // reset offset pour voir la dernière période
-  sOffset=0;
+  // reset des bornes pour englober la nouvelle mesure
+  rangeStart=null;rangeEnd=null;
   saveData();
   renderSuivi();
 }
 function delWeight(id){
   if(!confirm('Supprimer cette mesure ?'))return;
   weights=weights.filter(function(w){return w.id!==id;});
+  // si la fenêtre devient vide à cause de la suppression, reset
+  rangeStart=null;rangeEnd=null;
   saveData();
   renderSuivi();
 }
@@ -1347,91 +1346,117 @@ function editWeight(id){
   saveData();
   renderSuivi();
 }
-function setPeriod(p){
-  sPeriod=p;
-  sOffset=0;
-  document.querySelectorAll('.suivi-period').forEach(function(b){
-    b.classList.toggle('active',parseInt(b.getAttribute('data-p'))===p);
-  });
+function isoFromDate(d){
+  var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+function dateFromIso(iso){return new Date(iso+'T12:00:00');}
+function onRangeChange(){
+  var s=document.getElementById('dStart').value;
+  var e=document.getElementById('dEnd').value;
+  if(!s||!e)return;
+  // si début > fin, on inverse
+  if(s>e){var t=s;s=e;e=t;
+    document.getElementById('dStart').value=s;
+    document.getElementById('dEnd').value=e;
+  }
+  rangeStart=s;rangeEnd=e;
   renderSuivi();
 }
-function navPeriod(dir){
-  // dir=-1 : période précédente (passé) / dir=+1 : suivante (futur)
-  var newOff=sOffset-dir; // offset positif = passé
-  if(newOff<0)return; // pas de futur après aujourd'hui
-  sOffset=newOff;
+function navWeek(dir){
+  // dir=-1 : recule d'une semaine / dir=+1 : avance
+  if(!rangeStart||!rangeEnd)return;
+  var s=dateFromIso(rangeStart),e=dateFromIso(rangeEnd);
+  s.setDate(s.getDate()+dir*7);
+  e.setDate(e.getDate()+dir*7);
+  rangeStart=isoFromDate(s);
+  rangeEnd=isoFromDate(e);
+  document.getElementById('dStart').value=rangeStart;
+  document.getElementById('dEnd').value=rangeEnd;
   renderSuivi();
 }
 function fmtDateFr(iso){
-  // 'YYYY-MM-DD' -> 'D mois YYYY'
   var p=iso.split('-');
   var mois=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   return parseInt(p[2])+' '+mois[parseInt(p[1])-1]+' '+p[0];
+}
+function fmtDateShort(iso){
+  // 'YYYY-MM-DD' -> 'JJ/MM/AA'
+  var p=iso.split('-');
+  return p[2]+'/'+p[1]+'/'+p[0].slice(2);
 }
 function fmtMonthShort(d){
   var mois=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
   return mois[d.getMonth()];
 }
-function getPeriodWindow(){
-  // retourne {start, end} en Date — fenêtre actuelle selon sPeriod et sOffset
-  var end=new Date();
-  end.setHours(23,59,59,999);
-  // décaler vers le passé selon offset
-  end.setMonth(end.getMonth()-sOffset*sPeriod);
-  var start=new Date(end);
-  start.setMonth(start.getMonth()-sPeriod);
-  start.setHours(0,0,0,0);
-  return {start:start,end:end};
+function getRangeWindow(){
+  // priorité aux bornes utilisateur, sinon défaut = 1ère mesure -> dernière
+  if(rangeStart&&rangeEnd){
+    return {start:dateFromIso(rangeStart),end:dateFromIso(rangeEnd),startIso:rangeStart,endIso:rangeEnd};
+  }
+  if(weights.length===0){
+    return null;
+  }
+  var sorted=weights.slice().sort(function(a,b){return a.date<b.date?-1:1;});
+  var sIso=sorted[0].date,eIso=sorted[sorted.length-1].date;
+  // si une seule mesure, élargir d'un jour de chaque côté pour que le point soit visible
+  if(sIso===eIso){
+    var d=dateFromIso(sIso);
+    var s2=new Date(d);s2.setDate(s2.getDate()-1);
+    var e2=new Date(d);e2.setDate(e2.getDate()+1);
+    return {start:s2,end:e2,startIso:isoFromDate(s2),endIso:isoFromDate(e2)};
+  }
+  return {start:dateFromIso(sIso),end:dateFromIso(eIso),startIso:sIso,endIso:eIso};
 }
 function renderSuivi(){
-  var win=getPeriodWindow();
-  // label de période
-  var lbl;
-  if(sPeriod===12){
-    lbl=(win.start.getFullYear())+' – '+win.end.getFullYear();
-    if(win.start.getFullYear()===win.end.getFullYear())lbl=String(win.end.getFullYear());
-  }else{
-    var sM=fmtMonthShort(win.start),eM=fmtMonthShort(win.end);
-    if(win.start.getFullYear()===win.end.getFullYear()){
-      lbl=sM+' – '+eM+' '+win.end.getFullYear();
-    }else{
-      lbl=sM+' '+win.start.getFullYear()+' – '+eM+' '+win.end.getFullYear();
-    }
+  var win=getRangeWindow();
+  if(!win){
+    // aucune mesure du tout
+    document.getElementById('dStart').value='';
+    document.getElementById('dEnd').value='';
+    document.getElementById('periodLbl').textContent='—';
+    document.getElementById('weightChart').innerHTML='';
+    document.getElementById('weightEmpty').style.display='';
+    document.getElementById('weightEmpty').textContent='Ajoutez une première mesure';
+    renderWeightList();
+    return;
   }
-  document.getElementById('periodLbl').textContent=lbl;
-  // dessiner courbe
+  // sync les inputs si pas encore renseignés
+  var sInp=document.getElementById('dStart'),eInp=document.getElementById('dEnd');
+  if(!sInp.value)sInp.value=win.startIso;
+  if(!eInp.value)eInp.value=win.endIso;
+  // label
+  document.getElementById('periodLbl').textContent=fmtDateShort(win.startIso)+' – '+fmtDateShort(win.endIso);
   drawWeightChart(win);
-  // historique
   renderWeightList();
 }
 function drawWeightChart(win){
   var box=document.getElementById('weightChart');
   var emptyEl=document.getElementById('weightEmpty');
-  var startMs=win.start.getTime(),endMs=win.end.getTime();
-  // filtrer poids sur fenêtre
+  // étendre fenêtre fin à 23:59 pour inclure la dernière journée
+  var startMs=win.start.getTime();
+  var endD=new Date(win.end);endD.setHours(23,59,59,999);
+  var endMs=endD.getTime();
   var pts=weights.filter(function(w){
-    var t=new Date(w.date+'T12:00:00').getTime();
+    var t=dateFromIso(w.date).getTime();
     return t>=startMs&&t<=endMs;
   }).sort(function(a,b){return a.date<b.date?-1:1;});
   if(pts.length===0){
     box.innerHTML='';
     emptyEl.style.display='';
+    emptyEl.textContent='Aucune mesure pour cette période';
     return;
   }
   emptyEl.style.display='none';
-  // dimensions SVG
   var W=320,H=180,padL=32,padR=10,padT=18,padB=28;
   var plotW=W-padL-padR,plotH=H-padT-padB;
-  // bornes Y avec marge
   var kgs=pts.map(function(p){return p.kg;});
   var minK=Math.min.apply(null,kgs),maxK=Math.max.apply(null,kgs);
   var range=maxK-minK;
   if(range<2)range=2;
   var pad=range*0.15;
   var yMin=Math.floor(minK-pad),yMax=Math.ceil(maxK+pad);
-  // 4 lignes horizontales (graduations)
-  var gridLines='';
-  var yLabels='';
+  var gridLines='',yLabels='';
   var nGrid=4;
   for(var i=0;i<=nGrid;i++){
     var y=padT+plotH*i/nGrid;
@@ -1439,12 +1464,10 @@ function drawWeightChart(win){
     gridLines+='<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="#f3eafa" stroke-width="0.5" stroke-dasharray="2,2"/>';
     yLabels+='<text x="'+(padL-4)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="#aa88c0" font-family="Arial">'+val+'</text>';
   }
-  // axes
   var axes='<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" stroke="#e8ddf5" stroke-width="1"/>'+
            '<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="#e8ddf5" stroke-width="1"/>';
-  // calcul positions points
   function xPos(dateStr){
-    var t=new Date(dateStr+'T12:00:00').getTime();
+    var t=dateFromIso(dateStr).getTime();
     return padL+plotW*(t-startMs)/(endMs-startMs);
   }
   function yPos(kg){
@@ -1456,28 +1479,51 @@ function drawWeightChart(win){
   pts.forEach(function(p,i){
     var x=xPos(p.date),y=yPos(p.kg);
     var isLast=(i===pts.length-1);
-    if(isLast&&pts.length>0){
+    if(isLast){
       circles+='<circle cx="'+x+'" cy="'+y+'" r="4" fill="#fff" stroke="#9b72b8" stroke-width="2"/>';
     }else{
       circles+='<circle cx="'+x+'" cy="'+y+'" r="3" fill="#9b72b8"/>';
     }
   });
-  // labels X selon période
+  // labels X : adapter au nombre de jours
   var xLabels='';
-  var d=new Date(win.start);
-  d.setDate(1);
-  // step en mois selon période
-  var stepMois=sPeriod<=1?1:sPeriod<=3?1:sPeriod<=6?2:3;
-  while(d.getTime()<=endMs){
-    if(d.getTime()>=startMs-86400000){
-      var t=d.getTime();
-      var x=padL+plotW*(t-startMs)/(endMs-startMs);
+  var spanDays=Math.ceil((endMs-startMs)/86400000);
+  if(spanDays<=14){
+    // afficher chaque jour ou tous les 2 jours
+    var stepD=spanDays<=7?1:2;
+    var d=new Date(win.start);d.setHours(12,0,0,0);
+    while(d.getTime()<=endMs){
+      var x=padL+plotW*(d.getTime()-startMs)/(endMs-startMs);
       if(x>=padL-2&&x<=W-padR+2){
-        var lbl=fmtMonthShort(d);
-        xLabels+='<text x="'+x+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#aa88c0" font-family="Arial">'+lbl+'</text>';
+        xLabels+='<text x="'+x+'" y="'+(H-8)+'" text-anchor="middle" font-size="8" fill="#aa88c0" font-family="Arial">'+d.getDate()+'</text>';
       }
+      d.setDate(d.getDate()+stepD);
     }
-    d.setMonth(d.getMonth()+stepMois);
+  }else if(spanDays<=60){
+    // semaines (lundis)
+    var d2=new Date(win.start);d2.setHours(12,0,0,0);
+    // aller au lundi suivant
+    while(d2.getDay()!==1)d2.setDate(d2.getDate()+1);
+    while(d2.getTime()<=endMs){
+      var x2=padL+plotW*(d2.getTime()-startMs)/(endMs-startMs);
+      if(x2>=padL-2&&x2<=W-padR+2){
+        xLabels+='<text x="'+x2+'" y="'+(H-8)+'" text-anchor="middle" font-size="8" fill="#aa88c0" font-family="Arial">'+d2.getDate()+'/'+(d2.getMonth()+1)+'</text>';
+      }
+      d2.setDate(d2.getDate()+7);
+    }
+  }else{
+    // mois
+    var d3=new Date(win.start);d3.setDate(1);d3.setHours(12,0,0,0);
+    var stepM=spanDays<=180?1:spanDays<=400?2:3;
+    while(d3.getTime()<=endMs){
+      if(d3.getTime()>=startMs-86400000){
+        var x3=padL+plotW*(d3.getTime()-startMs)/(endMs-startMs);
+        if(x3>=padL-2&&x3<=W-padR+2){
+          xLabels+='<text x="'+x3+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#aa88c0" font-family="Arial">'+fmtMonthShort(d3)+'</text>';
+        }
+      }
+      d3.setMonth(d3.getMonth()+stepM);
+    }
   }
   var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+
           axes+gridLines+yLabels+line+circles+xLabels+'</svg>';
