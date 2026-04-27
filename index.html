@@ -84,6 +84,19 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   scrollbar-width:none;padding:2px 0;
 }
 .week-scroll::-webkit-scrollbar{display:none;}
+.cal-btn{
+  background:var(--card);border:none;
+  width:36px;height:36px;border-radius:12px;
+  font-size:16px;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  padding:0;
+}
+.cal-btn:active{opacity:.7;}
+.cal-hidden{
+  position:absolute;width:1px;height:1px;
+  opacity:0;pointer-events:none;
+}
 .day-pill{
   display:flex;flex-direction:column;align-items:center;
   padding:6px 10px;border-radius:12px;cursor:pointer;
@@ -581,9 +594,11 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
       <div class="sync-indicator" id="syncIndicator"></div>
       <div class="journal-header">
         <div class="week-nav">
-          <button class="week-arrow" onclick="shiftW(-1)">&#8592;</button>
+          <button class="week-arrow" onclick="shiftDay(-1)" aria-label="Jour précédent">&#8592;</button>
           <div class="week-scroll" id="wscroll"></div>
-          <button class="week-arrow" onclick="shiftW(1)">&#8594;</button>
+          <button class="week-arrow" onclick="shiftDay(1)" aria-label="Jour suivant">&#8594;</button>
+          <button class="cal-btn" onclick="openCal()" aria-label="Choisir une date">📅</button>
+          <input type="date" id="calpick" class="cal-hidden" onchange="onCalPick(this.value)"/>
         </div>
       </div>
         <button class="export-btn" onclick="exporterSemainier()">
@@ -1058,11 +1073,8 @@ function getQuota(d){
   return {P:BQ.P,L:BQ.L,G:BQ.G,F:BQ.F,S:BQ.S};
 }
 function getWEB(d){
-  var wk2=wk(d),wks=[],seen={};
-  Object.keys(daymap).forEach(function(k){var w=dk(getMon(dfk(k)));if(!seen[w]){seen[w]=true;wks.push(w);}});
-  wks.sort();var carry=0;
-  for(var i=0;i<wks.length;i++){var w=wks[i];if(w>=wk2)break;var wm=dfk(w);if(!isPast(addD(wm,6)))break;carry=Math.max(0,EB+carry-getWEU(w));}
-  return EB+carry;
+  // Chaque lundi remet le budget d'écarts à 0 — pas de report d'une semaine à l'autre.
+  return EB;
 }
 function getWEU(wm){var t=0;for(var i=0;i<7;i++){var k=dk(addD(dfk(wm),i));if(daymap[k])t+=daymap[k].ec.reduce(function(s,e){return s+e.kcal;},0);}return Math.round(t);}
 
@@ -1100,14 +1112,36 @@ if(window.visualViewport){window.visualViewport.addEventListener('resize',functi
 // RENDER SEMAINE
 // ═══════════════════════════════════════
 function renderWeek(){
-  var bm=getMon(cur),dm=addD(bm,wOff*7),dn=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'],html='';
-  for(var i=0;i<7;i++){var d=addD(dm,i),act=dk(d)===dk(cur);html+='<div class="day-pill'+(act?' active':'')+'" onclick="selDay(\''+dk(d)+'\')"><span class="dabbr">'+dn[i]+'</span><span class="dnum">'+d.getDate()+'</span></div>';}
+  // La barre affiche toujours la semaine (lundi-dimanche) qui contient `cur`.
+  var bm=getMon(cur),dn=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'],html='';
+  for(var i=0;i<7;i++){var d=addD(bm,i),act=dk(d)===dk(cur);html+='<div class="day-pill'+(act?' active':'')+'" onclick="selDay(\''+dk(d)+'\')"><span class="dabbr">'+dn[i]+'</span><span class="dnum">'+d.getDate()+'</span></div>';}
   document.getElementById('wscroll').innerHTML=html;
   document.getElementById('sumday').textContent=dk(cur)===dk(TODAY)?"Aujourd'hui":['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][cur.getDay()]+' '+cur.getDate();
 }
-function shiftW(dir){
-  wOff+=dir;var bm=getMon(TODAY),dm=addD(bm,wOff*7),ds=addD(dm,6);
-  if(dk(cur)<dk(dm)||dk(cur)>dk(ds))cur=new Date(dm);
+function shiftDay(dir){
+  cur=addD(cur,dir);
+  // Garder wOff cohérent avec cur (offset de la semaine de cur vs semaine de TODAY)
+  var tm=getMon(TODAY),sm=getMon(cur);
+  wOff=Math.round((sm-tm)/(7*24*3600*1000));
+  getDay(cur);render();
+}
+function openCal(){
+  var inp=document.getElementById('calpick');
+  if(!inp)return;
+  inp.value=dk(cur);
+  // showPicker() est mieux supporté sur mobile, fallback sur focus()
+  if(typeof inp.showPicker==='function'){
+    try{inp.showPicker();return;}catch(e){}
+  }
+  inp.focus();inp.click();
+}
+function onCalPick(val){
+  if(!val)return;
+  var d=dfk(val);
+  if(isNaN(d.getTime()))return;
+  cur=d;
+  var tm=getMon(TODAY),sm=getMon(cur);
+  wOff=Math.round((sm-tm)/(7*24*3600*1000));
   getDay(cur);render();
 }
 
@@ -1128,11 +1162,10 @@ function renderSummary(){
   document.getElementById('catsbox').innerHTML=
     '<div class="cats-row">'+catBlock('P',day,q)+catBlock('L',day,q)+'</div>'+
     '<div class="cats-row row2">'+catBlock('G',day,q)+catBlock('F',day,q)+catBlock('S',day,q)+'</div>';
-  var budget=getWEB(cur),used=getWEU(wk(cur)),over=Math.max(0,used-budget),pct=Math.min(100,Math.round(Math.min(used,budget)/budget*100)),carry=budget-EB;
-  var cTxt=carry>0?' <span style="font-size:10px;opacity:.6">(+'+carry+' rep.)</span>':'';
+  var budget=getWEB(cur),used=getWEU(wk(cur)),over=Math.max(0,used-budget),pct=Math.min(100,Math.round(Math.min(used,budget)/budget*100));
   var oTxt=over>0?' <span style="color:#d97070;font-size:11px;">+'+over+' kcal dépassés</span>':'';
   document.getElementById('ecartsbar').innerHTML=
-    '<div class="ecarts-info"><span class="label">Écarts semaine'+cTxt+'</span><span class="val">'+used+' / '+budget+' kcal'+oTxt+'</span></div>'+
+    '<div class="ecarts-info"><span class="label">Écarts semaine</span><span class="val">'+used+' / '+budget+' kcal'+oTxt+'</span></div>'+
     '<div class="ecarts-track"><div class="ecarts-fill" style="width:'+pct+'%;background:'+(over>0?'#d97070':'#c8874a')+'"></div></div>';
 }
 
@@ -1216,12 +1249,25 @@ function addVeg(mi){
   var inp=document.getElementById('vq-'+mi);
   var txt=inp?inp.value.trim():(meal.sf?meal.sf.name:'');
   if(!txt)return;
-  // Multi-saisie : on split sur virgule/point-virgule, une entrée par item non vide
+  // Multi-saisie : on split sur virgule/point-virgule, on garde tout sur UNE seule ligne.
   var items=txt.split(/[,;]/).map(function(s){return s.trim();}).filter(function(s){return s.length>0;});
   if(items.length===0)return;
-  items.forEach(function(item){
-    meal.entries.push({id:idc++,name:item,cat:'V',unit:'',qty:0,cases:0});
+  // Capitaliser la première lettre de chaque item, mettre les suivants en minuscules
+  items=items.map(function(s,i){
+    if(i===0)return s.charAt(0).toUpperCase()+s.slice(1);
+    return s.toLowerCase();
   });
+  var newName=items.join(', ');
+  // Chercher s'il y a déjà une entrée Légumes dans ce repas → on concatène
+  var existing=null;
+  for(var i=0;i<meal.entries.length;i++){
+    if(meal.entries[i].cat==='V'){existing=meal.entries[i];break;}
+  }
+  if(existing){
+    existing.name=existing.name+', '+items.map(function(s){return s.toLowerCase();}).join(', ');
+  }else{
+    meal.entries.push({id:idc++,name:newName,cat:'V',unit:'',qty:0,cases:0});
+  }
   meal.sf=null;meal.open=false;hideDrop();render();saveData();
 }
 function openVegBox(ev,mi){
