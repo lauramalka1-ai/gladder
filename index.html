@@ -325,6 +325,30 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   cursor:pointer;
 }
 .addfood-btn:active{opacity:.8;}
+.kcal-card{
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.6);
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:12px;
+}
+.kcal-title{
+  font-size:11px;font-weight:700;color:var(--purple);
+  letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;
+}
+.kcal-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:6px 14px;font-size:12px;
+}
+.kcal-grid > div{display:flex;justify-content:space-between;align-items:center;}
+.kc-v{color:#7d6f60;}
+.ec-section{border:1.5px solid #e8a87c;}
+.ec-section .catheader{background:rgba(232,168,124,.06);}
+.ec-tag{
+  font-size:11px;font-weight:600;
+  padding:2px 7px;border-radius:6px;flex:none;
+  white-space:nowrap;
+}
 
 /* ── RECETTES ── */
 .rec-page-inner{padding:0 18px 10px;}
@@ -881,6 +905,73 @@ var RCAT=[{key:'plats',label:'Plats',e:'🍲'},{key:'sauces',label:'Sauces',e:'�
 var curRecCat=null,newRecId=300;
 
 // ═══════════════════════════════════════
+// ÉCARTS — équivalences caloriques (PDF Dr Guirette)
+// cases : objet {S,G,F,L,P} ou null (pas de cases)
+// kcal  : kcal supplémentaires (au-delà des cases) — 0 si rien
+// Type implicite :
+//   cases-only : cases≠null, kcal=0  → ajout dans repas, pas d'écart auto
+//   mixte      : cases≠null, kcal>0  → ajout dans repas + entrée auto en Écart pour le delta kcal
+//   kcal-only  : cases=null          → ajout direct via section Écarts du jour (pas dans repas)
+// ═══════════════════════════════════════
+var ECARTS=[
+  // Mixtes / cases-only
+  {name:'1 croissant',                      cases:{S:1.5,G:3},   kcal:0   },
+  {name:'1 pain au chocolat',               cases:{S:1.5},       kcal:200 },
+  {name:'40g brioche',                      cases:{S:2,G:1},     kcal:0   },
+  {name:'60g pain au lait',                 cases:{S:1.5,G:1},   kcal:0   },
+  {name:'1 part tarte aux fruits',          cases:{S:1,F:1},     kcal:120 },
+  {name:'1 petit hamburger (Mac Donald)',   cases:{S:2,P:2},     kcal:0   },
+  {name:'1 pizza (de pizzeria)',            cases:{S:7.5,P:2},   kcal:0   },
+  {name:'1 sandwich (baguette)',            cases:{S:3,P:1,G:1}, kcal:0   },
+  // 100% kcal — ajout via section Écarts uniquement
+  {name:'½ avocat',                         cases:null,          kcal:300 },
+  {name:'10g chocolat (carré du café)',     cases:null,          kcal:50  },
+  {name:'1 verre de vin / 250ml bière',     cases:null,          kcal:100 },
+  {name:'1 verre apéritif / coupe champagne',cases:null,         kcal:120 },
+  {name:'2 olives vertes',                  cases:null,          kcal:20  },
+  {name:'2 apéricubes',                     cases:null,          kcal:30  },
+  {name:'4 saucisses cocktail',             cases:null,          kcal:50  },
+  {name:'1 pruneau au bacon',               cases:null,          kcal:60  },
+  {name:'10 cacahuètes',                    cases:null,          kcal:100 },
+  {name:'10 pistaches',                     cases:null,          kcal:150 },
+  {name:'10 amandes / noisettes grillées',  cases:null,          kcal:150 },
+  {name:'10g petit beurre',                 cases:null,          kcal:45  },
+  {name:'12g madeleine',                    cases:null,          kcal:55  },
+  {name:'15g biscuit au chocolat',          cases:null,          kcal:70  },
+  {name:'20g pain d\'épices',               cases:null,          kcal:80  },
+  {name:'20g biscuits salés',               cases:null,          kcal:80  },
+  {name:'1 petit four (canapé)',            cases:null,          kcal:70  },
+  {name:'1 petit four (type quiche)',       cases:null,          kcal:70  },
+  {name:'1 petit four crème (type éclair)', cases:null,          kcal:80  },
+  {name:'1 petit four crème au beurre',     cases:null,          kcal:80  },
+  {name:'1 petit four sans crème',          cases:null,          kcal:50  },
+  {name:'1 part glace / gâteau / brownie',  cases:null,          kcal:400 },
+  {name:'1 chocolat liégeois',              cases:null,          kcal:400 },
+  {name:'1 cône / Magnum / Rocher',         cases:null,          kcal:250 },
+  {name:'1 boule de sorbet',                cases:null,          kcal:60  },
+  {name:'1 càc crème fraîche allégée',      cases:null,          kcal:10  },
+  {name:'1 càc cacao sans sucre',           cases:null,          kcal:20  },
+  {name:'1 càc confiture',                  cases:null,          kcal:20  },
+  {name:'1 càc miel',                       cases:null,          kcal:20  },
+  {name:'1 càc sucre',                      cases:null,          kcal:20  }
+];
+// Valeur calorique d'1 case par famille (PDF Dr Guirette)
+var KCAL_CASE={P:70,L:90,G:40,F:60,S:80};
+function kcalOfCases(cs){
+  if(!cs)return 0;
+  var t=0;Object.keys(cs).forEach(function(k){t+=cs[k]*(KCAL_CASE[k]||0);});
+  return t;
+}
+function ecartTotalKcal(e){return kcalOfCases(e.cases)+(e.kcal||0);}
+function fmtCases(cs){
+  if(!cs)return '';
+  var icons={P:'🐟',L:'🥛',G:'🫒',F:'🍎',S:'🍞'};
+  return Object.keys(cs).filter(function(k){return cs[k]>0;}).map(function(k){
+    var v=cs[k];return (v%1===0?v:v.toFixed(1).replace(/\.0$/,''))+icons[k];
+  }).join(' + ');
+}
+
+// ═══════════════════════════════════════
 // FIREBASE
 // ═══════════════════════════════════════
 var firebaseApp=null,db=null,fbAuth=null,currentUser=null,saveTimeout=null;
@@ -1053,7 +1144,10 @@ function saAll(q){
   var rs=recipes.filter(function(r){return nrm(r.name).startsWith(nq);})
     .concat(recipes.filter(function(r){return nrm(r.name).includes(nq)&&!nrm(r.name).startsWith(nq);}))
     .slice(0,4).map(function(r){return{id:r.id,name:r.name,cat:r.cat,bilan:r.bilan,note:r.note,_t:'rec'};});
-  return fs.concat(rs).slice(0,12);
+  // Écarts : seulement ceux avec cases (case-only ou mixtes) — les 100% kcal vont dans la section Écarts du jour
+  var ecMatching=ECARTS.filter(function(e){return e.cases&&nrm(e.name).includes(nq);}).slice(0,4)
+    .map(function(e){return{name:e.name,cases:e.cases,kcal:e.kcal||0,_t:'ec'};});
+  return fs.concat(rs).concat(ecMatching).slice(0,14);
 }
 
 var TODAY=new Date();TODAY.setHours(0,0,0,0);
@@ -1104,6 +1198,11 @@ function showDrop(mi,m,el){
   var html='';
   m.forEach(function(x,i){
     if(x._t==='rec'){var bs=bsS(x.bilan);html+='<div class="acrow" onclick="pickI('+i+')"><span>🍳 '+x.name+'</span><span class="artag">'+bs+'/part</span></div>';}
+    else if(x._t==='ec'){
+      var tag=x.cases?fmtCases(x.cases):'';
+      if(x.kcal>0)tag+=(tag?' + ':'')+x.kcal+' kcal';
+      html+='<div class="acrow" onclick="pickI('+i+')"><span>🍰 '+x.name+'</span><span class="actag" style="background:rgba(200,135,74,.12);color:#c8874a;">'+tag+'</span></div>';
+    }
     else{html+='<div class="acrow" onclick="pickI('+i+')"><span>'+x.name+'</span><span class="actag" style="background:'+CV[x.cat]+'22;color:'+CV[x.cat]+';">'+CL[x.cat]+'</span></div>';}
   });
   _bsl.innerHTML=html;
@@ -1116,10 +1215,12 @@ function hideDrop(){bsI();_bs.classList.remove('open');_bso.classList.remove('op
 function pickI(i){
   var x=gacM[i];if(!x||gacMi===null)return;
   var meal=getDay(cur).meals[gacMi];
-  if(x._t==='rec'){meal.sr={recipe:x,parts:1};meal.sf=null;meal.sv='';}
-  else{meal.sf=x;meal.sr=null;meal.sv='';}
+  if(x._t==='rec'){meal.sr={recipe:x,parts:1};meal.sf=null;meal.sv='';meal.se=null;}
+  else if(x._t==='ec'){meal.se={ec:x,portions:1};meal.sf=null;meal.sr=null;meal.sv='';}
+  else{meal.sf=x;meal.sr=null;meal.sv='';meal.se=null;}
   hideDrop();render();
   if(x._t==='food'&&x.cat!=='V'&&x.cat!=='A')setTimeout(function(){var q=document.getElementById('q-'+gacMi);if(q)q.focus();},40);
+  if(x._t==='ec')setTimeout(function(){var q=document.getElementById('ep-'+gacMi);if(q)q.focus();},40);
 }
 if(window.visualViewport){window.visualViewport.addEventListener('resize',function(){if(_bs&&_bs.classList.contains('open')){var kh=Math.max(0,window.innerHeight-window.visualViewport.height);_bs.style.bottom=kh+'px';}});}
 
@@ -1201,11 +1302,22 @@ function renderMeals(){
         (e.cat!=='V'&&e.cat!=='A'?'<button class="edit-btn" onclick="startEdit('+e.id+')">✏</button>':'')+
         '<button class="del-btn" onclick="delE('+mi+','+e.id+')">✕</button></div></div>';
     }
-    var sf=meal.sf,sr=meal.sr,fs='';
+    var sf=meal.sf,sr=meal.sr,se=meal.se,fs='';
     if(meal.open){
       if(sr){
         var r2=sr.recipe,pts=sr.parts;
         fs='<div class="recbox"><div class="recbox-name">🍳 '+r2.name+'</div><div class="recbox-bilan">'+bsL(r2.bilan)+' / part'+(r2.note?' · '+r2.note:'')+'</div><div class="recbox-row"><div class="parts-ctrl"><button class="pb" onmousedown="chgP('+mi+',-1)">−</button><span class="pval">'+pts+'</span><button class="pb" onmousedown="chgP('+mi+',1)">+</button><span class="plab">part'+(pts>1?'s':'')+'</span></div><button class="recadd-btn" onmousedown="addRecE('+mi+')">Ajouter</button></div></div>';
+      }else if(se){
+        var ec=se.ec,po=se.portions;
+        var seTag=ec.cases?fmtCases(ec.cases):'';
+        if(ec.kcal>0)seTag+=(seTag?' + ':'')+ec.kcal+' kcal';
+        fs='<div class="recbox" style="background:rgba(232,168,124,.08);border-color:#e8a87c;">'+
+          '<div class="recbox-name" style="color:#c8874a;">🍰 '+ec.name+'</div>'+
+          '<div class="recbox-bilan" style="color:#c8874a;">'+seTag+(po>1?' × '+po:'')+'</div>'+
+          '<div class="recbox-row">'+
+            '<div class="parts-ctrl"><button class="pb" onmousedown="chgEcP('+mi+',-1)">−</button><span class="pval">'+po+'</span><button class="pb" onmousedown="chgEcP('+mi+',1)">+</button><span class="plab">portion'+(po>1?'s':'')+'</span></div>'+
+            '<button class="recadd-btn" style="background:#c8874a;" onmousedown="addEcM('+mi+')">Ajouter</button>'+
+          '</div></div>';
       }else if(sf&&sf.cat==='V'){
         fs='<div style="background:rgba(123,184,154,.1);border-radius:12px;padding:9px 13px;margin-top:6px;"><div style="font-size:13px;font-weight:600;color:#7bb89a;">🥦 Légumes — à volonté</div><div style="font-size:11px;color:#a89890;margin-top:1px;">Saisissez librement, ex: tomates, salade, concombre</div></div><div class="qty-wrap"><input type="text" placeholder="Ex: tomates, salade, concombre" id="vq-'+mi+'" style="flex:1;font-size:13px;padding:9px 12px;border-radius:12px;border:1.5px solid var(--accent2);background:#f6fdf9;font-family:var(--font);outline:none;" onkeydown="if(event.key===\'Enter\')addVeg('+mi+')"/><button class="sub-btn" onclick="addVeg('+mi+')">Ajouter</button></div>';
       }else if(sf&&sf.cat==='A'){
@@ -1213,7 +1325,7 @@ function renderMeals(){
       }else if(sf){
         fs='<div class="sfbar"><span class="sfname">'+sf.name+'</span><button class="sfclear" onclick="clearSF('+mi+')">✕</button></div><div class="hint-txt">1 case = '+sf.per+' '+sf.unit+'</div><div class="qty-wrap"><input type="number" placeholder="Quantité" min="0" step="any" id="q-'+mi+'" onkeydown="if(event.key===\'Enter\')addE('+mi+')"/><span class="ulab">'+sf.unit+'</span><button class="sub-btn" onclick="addE('+mi+')">Ajouter</button></div>';
       }
-      html+='<div class="meal-card'+(meal.coll?' coll':'')+'"><div class="meal-top" onclick="togM('+mi+')"><div class="meal-left"><div class="meal-name">'+meal.name+'</div>'+(meal.sub?'<div class="meal-sub">'+meal.sub+'</div>':'')+'</div><div class="meal-emoji">'+meal.il+'</div></div>'+(meal.entries.length?'<div class="entries">'+ehtml+'</div>':'')+'<div class="meal-divider"></div><div class="add-form"><input class="fld" id="s-'+mi+'" type="text" placeholder="Aliment ou recette…" autocomplete="off" value="'+(sr?sr.recipe.name:sf?sf.name:(meal.sv||''))+'" oninput="onS('+mi+',this.value)" onfocus="onF('+mi+',this)"/>'+fs+'</div></div>';
+      html+='<div class="meal-card'+(meal.coll?' coll':'')+'"><div class="meal-top" onclick="togM('+mi+')"><div class="meal-left"><div class="meal-name">'+meal.name+'</div>'+(meal.sub?'<div class="meal-sub">'+meal.sub+'</div>':'')+'</div><div class="meal-emoji">'+meal.il+'</div></div>'+(meal.entries.length?'<div class="entries">'+ehtml+'</div>':'')+'<div class="meal-divider"></div><div class="add-form"><input class="fld" id="s-'+mi+'" type="text" placeholder="Aliment ou recette…" autocomplete="off" value="'+(sr?sr.recipe.name:se?se.ec.name:sf?sf.name:(meal.sv||''))+'" oninput="onS('+mi+',this.value)" onfocus="onF('+mi+',this)"/>'+fs+'</div></div>';
     }else{
       html+='<div class="meal-card'+(meal.coll?' coll':'')+'"><div class="meal-top" onclick="togM('+mi+')"><div class="meal-left"><div class="meal-name">'+meal.name+'</div>'+(meal.sub?'<div class="meal-sub">'+meal.sub+'</div>':'')+'</div><div class="meal-emoji">'+meal.il+'</div></div>'+(meal.entries.length?'<div class="entries">'+ehtml+'</div>':'')+'<div class="meal-divider"></div><div class="meal-open-row"><button class="add-btn" onclick="togM('+mi+')">+ Ajouter</button><button class="add-btn add-btn-veg" onclick="openVegBox(event,'+mi+')">+ Légumes</button></div></div>';
     }
@@ -1240,16 +1352,40 @@ function selDay(k){cur=dfk(k);var tm=getMon(TODAY),sm=getMon(cur);wOff=Math.roun
 function togM(mi){var day=getDay(cur);day.meals[mi].open=!day.meals[mi].open;day.meals[mi].sf=null;day.meals[mi].sr=null;day.meals[mi].sv='';editId=null;hideDrop();render();saveData();if(day.meals[mi].open)setTimeout(function(){var el=document.getElementById('s-'+mi);if(el)el.focus();},60);}
 function togEc(){var day=getDay(cur);day.eco=!day.eco;render();saveData();}
 function setEcm(m){var day=getDay(cur);day.ecm=m;day.ecf=null;render();}
-function onF(mi,inp){var meal=getDay(cur).meals[mi];if(meal.sf||meal.sr)return;var sv=meal.sv||'';if(sv.length>=2){var m=saAll(sv);if(m.length)showDrop(mi,m,inp);}}
-function onS(mi,val){var meal=getDay(cur).meals[mi];meal.sv=val;meal.sf=null;meal.sr=null;var inp=document.getElementById('s-'+mi);if(val.length<2){hideDrop();return;}var m=saAll(val);if(!m.length){hideDrop();return;}showDrop(mi,m,inp);}
-function clearSF(mi){var meal=getDay(cur).meals[mi];meal.sf=null;meal.sr=null;meal.sv='';hideDrop();render();setTimeout(function(){var el=document.getElementById('s-'+mi);if(el)el.focus();},30);}
+function onF(mi,inp){var meal=getDay(cur).meals[mi];if(meal.sf||meal.sr||meal.se)return;var sv=meal.sv||'';if(sv.length>=2){var m=saAll(sv);if(m.length)showDrop(mi,m,inp);}}
+function onS(mi,val){var meal=getDay(cur).meals[mi];meal.sv=val;meal.sf=null;meal.sr=null;meal.se=null;var inp=document.getElementById('s-'+mi);if(val.length<2){hideDrop();return;}var m=saAll(val);if(!m.length){hideDrop();return;}showDrop(mi,m,inp);}
+function clearSF(mi){var meal=getDay(cur).meals[mi];meal.sf=null;meal.sr=null;meal.se=null;meal.sv='';hideDrop();render();setTimeout(function(){var el=document.getElementById('s-'+mi);if(el)el.focus();},30);}
 function chgP(mi,d){var meal=getDay(cur).meals[mi];if(!meal.sr)return;meal.sr.parts=Math.max(1,meal.sr.parts+d);render();}
+function chgEcP(mi,d){var meal=getDay(cur).meals[mi];if(!meal.se)return;meal.se.portions=Math.max(1,meal.se.portions+d);render();}
 function addRecE(mi){
   var day=getDay(cur),meal=day.meals[mi],sr=meal.sr;if(!sr)return;
   var r=sr.recipe,pts=sr.parts,bilanTotal={},keys=Object.keys(r.bilan||{});
   for(var i=0;i<keys.length;i++){var k=keys[i],val=Math.round(r.bilan[k]*pts*100)/100;if(val>0){bilanTotal[k]=val;if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]+val)*1000)/1000;}}
   meal.entries.push({id:idc++,_t:'rec',name:r.name,parts:pts,bilan:r.bilan,bilanTotal:bilanTotal,cases:0,cat:'recipe'});
   meal.sr=null;meal.sf=null;meal.open=false;hideDrop();render();saveData();saveData();
+}
+// Ajout d'un écart à un repas : décompte cases + crée une entrée auto en Écart pour les kcal supplémentaires
+function addEcM(mi){
+  var day=getDay(cur),meal=day.meals[mi],se=meal.se;if(!se)return;
+  var ec=se.ec,po=se.portions||1;
+  // Calculer cases totales et bilan
+  var bilanTotal={},keys=ec.cases?Object.keys(ec.cases):[];
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i],val=Math.round(ec.cases[k]*po*100)/100;
+    if(val>0){
+      bilanTotal[k]=val;
+      if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]+val)*1000)/1000;
+    }
+  }
+  // Ajouter l'entrée comme un "mini-recipe"
+  var entryName=ec.name+(po>1?' × '+po:'');
+  meal.entries.push({id:idc++,_t:'rec',name:entryName,parts:po,bilan:ec.cases||{},bilanTotal:bilanTotal,cases:0,cat:'recipe'});
+  // Si kcal supplémentaires : créer une entrée auto dans la section Écarts
+  var extraKcal=(ec.kcal||0)*po;
+  if(extraKcal>0){
+    day.ec.push({id:idc++,name:ec.name+(po>1?' × '+po:'')+' (suppl.)',kcal:Math.round(extraKcal),_auto:true});
+  }
+  meal.se=null;meal.sf=null;meal.sr=null;meal.open=false;hideDrop();render();saveData();
 }
 function addVeg(mi){
   var day=getDay(cur),meal=day.meals[mi];
@@ -1382,7 +1518,16 @@ function refLabel(f){
   return f.per+' '+f.unit+' = 1 case';
 }
 function renderRef(){
-  document.getElementById('refcats').innerHTML=RCATLIST.map(function(cat){
+  // Encart calorique
+  var kcalCard='<div class="kcal-card"><div class="kcal-title">Valeur calorique d\'1 case</div><div class="kcal-grid">'+
+    '<div><span style="color:#5c9fe8;font-weight:600;">🐟 Protéines</span><span class="kc-v">70 kcal</span></div>'+
+    '<div><span style="color:#9e9b94;font-weight:600;">🥛 Laitages</span><span class="kc-v">90 kcal</span></div>'+
+    '<div><span style="color:#7bb89a;font-weight:600;">🫒 Graisses</span><span class="kc-v">40 kcal</span></div>'+
+    '<div><span style="color:#d97070;font-weight:600;">🍎 Fruits</span><span class="kc-v">60 kcal</span></div>'+
+    '<div><span style="color:#c8874a;font-weight:600;">🍞 Féculents</span><span class="kc-v">80 kcal</span></div>'+
+    '</div></div>';
+  // Catégories standard
+  var catsHtml=RCATLIST.map(function(cat){
     var items=getAllFoods().filter(function(f){return f.cat===cat.key;}),isO=roOpen[cat.key];
     var ihtml=items.map(function(f){
       var actions=f._cust?'<button class="ci-act ci-edit" onclick="event.stopPropagation();editCustomFood('+f._id+')">✏</button><button class="ci-act ci-del" onclick="event.stopPropagation();delCustomFood('+f._id+')">✕</button>':'';
@@ -1390,15 +1535,37 @@ function renderRef(){
     }).join('');
     return'<div class="catsec"><div class="catheader" onclick="togRef(\''+cat.key+'\')"><div class="cathl"><span style="font-size:18px;">'+cat.icon+'</span><span style="font-size:14px;font-weight:600;color:'+cat.color+';">'+cat.label+'</span></div><span class="cchev'+(isO?' open':'')+'">▼</span></div><div class="catitems'+(isO?' open':'')+'">'+ihtml+'</div></div>';
   }).join('');
+  // Catégorie Écarts (à la fin)
+  var ecIsO=roOpen['E'];
+  var ecItems=ECARTS.map(function(e,i){
+    var tag,col;
+    if(e.cases&&e.kcal>0){tag=fmtCases(e.cases)+' + '+e.kcal+' kcal';col='#c8874a';}
+    else if(e.cases){tag=fmtCases(e.cases);col='#c8874a';}
+    else{tag=e.kcal+' kcal';col='#d97070';}
+    return'<div class="catitem ec-item"><span class="ciname">'+e.name+'</span><span class="ec-tag" style="color:'+col+';background:'+(col==='#c8874a'?'rgba(200,135,74,.08)':'rgba(217,112,112,.08)')+';">'+tag+'</span></div>';
+  }).join('');
+  var ecCat='<div class="catsec ec-section"><div class="catheader" onclick="togRef(\'E\')"><div class="cathl"><span style="font-size:18px;">🍰</span><span style="font-size:14px;font-weight:600;color:#c8874a;">Écarts</span></div><span class="cchev'+(ecIsO?' open':'')+'">▼</span></div><div class="catitems'+(ecIsO?' open':'')+'">'+ecItems+'</div></div>';
+
+  document.getElementById('refcats').innerHTML=kcalCard+catsHtml+ecCat;
 }
 function togRef(k){roOpen[k]=!roOpen[k];renderRef();}
 function onRefS(val){
   var res=document.getElementById('refres'),cats=document.getElementById('refcats');
   if(val.length<2){res.innerHTML='';cats.style.display='';return;}
-  var nv=nrm(val),matches=getAllFoods().filter(function(f){return nrm(f.name).includes(nv);});
-  if(!matches.length){res.innerHTML='<div style="font-size:13px;color:#a89890;padding:8px 0">Aucun résultat.</div>';cats.style.display='none';return;}
+  var nv=nrm(val);
+  var foodMatches=getAllFoods().filter(function(f){return nrm(f.name).includes(nv);});
+  var ecMatches=ECARTS.filter(function(e){return nrm(e.name).includes(nv);});
+  if(!foodMatches.length&&!ecMatches.length){res.innerHTML='<div style="font-size:13px;color:#a89890;padding:8px 0">Aucun résultat.</div>';cats.style.display='none';return;}
   cats.style.display='none';
-  res.innerHTML=matches.map(function(f){var m2=CMETA[f.cat]||{color:'#7bb89a'};return'<div class="ref-result"><div style="font-size:14px;font-weight:600;margin-bottom:2px">'+f.name+(f._cust?' <span class="ci-tag">perso</span>':'')+' <span style="font-size:11px;font-weight:400;color:'+m2.color+';">'+(CL[f.cat]||'Légumes')+'</span></div><div style="font-size:13px;color:#7bb89a;">'+refLabel(f)+'</div></div>';}).join('');
+  var foodHtml=foodMatches.map(function(f){var m2=CMETA[f.cat]||{color:'#7bb89a'};return'<div class="ref-result"><div style="font-size:14px;font-weight:600;margin-bottom:2px">'+f.name+(f._cust?' <span class="ci-tag">perso</span>':'')+' <span style="font-size:11px;font-weight:400;color:'+m2.color+';">'+(CL[f.cat]||'Légumes')+'</span></div><div style="font-size:13px;color:#7bb89a;">'+refLabel(f)+'</div></div>';}).join('');
+  var ecHtml=ecMatches.map(function(e){
+    var tag,col;
+    if(e.cases&&e.kcal>0){tag=fmtCases(e.cases)+' + '+e.kcal+' kcal';col='#c8874a';}
+    else if(e.cases){tag=fmtCases(e.cases);col='#c8874a';}
+    else{tag=e.kcal+' kcal';col='#d97070';}
+    return'<div class="ref-result"><div style="font-size:14px;font-weight:600;margin-bottom:2px">'+e.name+' <span style="font-size:11px;font-weight:400;color:#c8874a;">Écart</span></div><div style="font-size:13px;color:'+col+';">'+tag+'</div></div>';
+  }).join('');
+  res.innerHTML=foodHtml+ecHtml;
 }
 
 // ═══════════════════════════════════════
