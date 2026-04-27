@@ -84,19 +84,32 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   scrollbar-width:none;padding:2px 0;
 }
 .week-scroll::-webkit-scrollbar{display:none;}
-.cal-btn{
-  background:var(--card);border:none;
-  width:36px;height:36px;border-radius:12px;
-  font-size:16px;cursor:pointer;flex-shrink:0;
+.cal-wrap{
+  position:relative;
+  width:36px;height:36px;
+  border-radius:12px;
+  background:var(--card);
+  flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 1px 4px rgba(0,0,0,.06);
-  padding:0;
+  overflow:hidden;
 }
-.cal-btn:active{opacity:.7;}
-.cal-hidden{
-  position:absolute;width:1px;height:1px;
-  opacity:0;pointer-events:none;
+.cal-icon{
+  font-size:16px;
+  pointer-events:none;
 }
+.cal-input{
+  position:absolute;
+  inset:0;
+  width:100%;height:100%;
+  opacity:0;
+  border:none;background:transparent;
+  cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+  font-size:16px;
+  /* Sur iOS, on a besoin que l'input occupe toute la zone pour que le tap soit capté */
+}
+.cal-input::-webkit-date-and-time-value{text-align:left;}
 .day-pill{
   display:flex;flex-direction:column;align-items:center;
   padding:6px 10px;border-radius:12px;cursor:pointer;
@@ -597,8 +610,10 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
           <button class="week-arrow" onclick="shiftDay(-1)" aria-label="Jour précédent">&#8592;</button>
           <div class="week-scroll" id="wscroll"></div>
           <button class="week-arrow" onclick="shiftDay(1)" aria-label="Jour suivant">&#8594;</button>
-          <button class="cal-btn" onclick="openCal()" aria-label="Choisir une date">📅</button>
-          <input type="date" id="calpick" class="cal-hidden" onchange="onCalPick(this.value)"/>
+          <div class="cal-wrap">
+            <span class="cal-icon" aria-hidden="true">📅</span>
+            <input type="date" id="calpick" class="cal-input" onchange="onCalPick(this.value)" aria-label="Choisir une date"/>
+          </div>
         </div>
       </div>
         <button class="export-btn" onclick="exporterSemainier()">
@@ -1117,6 +1132,8 @@ function renderWeek(){
   for(var i=0;i<7;i++){var d=addD(bm,i),act=dk(d)===dk(cur);html+='<div class="day-pill'+(act?' active':'')+'" onclick="selDay(\''+dk(d)+'\')"><span class="dabbr">'+dn[i]+'</span><span class="dnum">'+d.getDate()+'</span></div>';}
   document.getElementById('wscroll').innerHTML=html;
   document.getElementById('sumday').textContent=dk(cur)===dk(TODAY)?"Aujourd'hui":['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][cur.getDay()]+' '+cur.getDate();
+  // Garder le picker calendrier synchronisé sur la date courante
+  var cp=document.getElementById('calpick');if(cp)cp.value=dk(cur);
 }
 function shiftDay(dir){
   cur=addD(cur,dir);
@@ -1124,16 +1141,6 @@ function shiftDay(dir){
   var tm=getMon(TODAY),sm=getMon(cur);
   wOff=Math.round((sm-tm)/(7*24*3600*1000));
   getDay(cur);render();
-}
-function openCal(){
-  var inp=document.getElementById('calpick');
-  if(!inp)return;
-  inp.value=dk(cur);
-  // showPicker() est mieux supporté sur mobile, fallback sur focus()
-  if(typeof inp.showPicker==='function'){
-    try{inp.showPicker();return;}catch(e){}
-  }
-  inp.focus();inp.click();
 }
 function onCalPick(val){
   if(!val)return;
