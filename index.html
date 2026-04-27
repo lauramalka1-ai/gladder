@@ -2169,14 +2169,29 @@ function _genererPDF() {
     html+='<td style="text-align:center;">'+(ec3>0?JOURS_FR[ji3].slice(0,3)+': '+ec3+' kcal':'')+'</td>';
   }
   html+='</tr></table>';
+  // Barre d'action en bas (cachée à l'impression)
+  html+='<div class="action-bar no-print">';
+  html+='<button onclick="window.close();if(!window.closed){history.back();}" class="btn-back">← Retour à l\'app</button>';
+  html+='<button onclick="window.print()" class="btn-print">🖨️ Imprimer / Enregistrer en PDF</button>';
+  html+='</div>';
   html+='</body></html>';
+
+  // CSS supplémentaire pour la barre d'action
+  html=html.replace('</style></head>',
+    '.action-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid #ccc;padding:12px;display:flex;gap:10px;justify-content:center;z-index:9999;box-shadow:0 -2px 8px rgba(0,0,0,.1);}'+
+    '.action-bar button{font-size:15px;padding:12px 18px;border-radius:10px;border:1.5px solid #888;background:#fff;cursor:pointer;font-family:inherit;font-weight:600;}'+
+    '.btn-back{color:#555;}'+
+    '.btn-print{background:#9b72b8;color:#fff;border-color:#9b72b8;}'+
+    '.btn-print:active{opacity:.85;}'+
+    'body{padding-bottom:80px;}'+
+    '@media print{.no-print{display:none!important;}body{padding-bottom:0;}}'+
+    '</style></head>');
 
   var w=window.open('','_blank');
   if(!w){alert('Autorisez les popups pour générer le PDF.');return;}
   w.document.write(html);
   w.document.close();
   w.focus();
-  setTimeout(function(){w.print();},600);
 }
 
 function _genererXLSX() {
