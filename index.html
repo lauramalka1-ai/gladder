@@ -349,6 +349,14 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   padding:2px 7px;border-radius:6px;flex:none;
   white-space:nowrap;
 }
+.ec-badge{
+  font-size:9px;font-weight:700;color:#c8874a;
+  background:rgba(200,135,74,.15);
+  border-radius:4px;padding:1px 6px;
+  text-transform:uppercase;letter-spacing:0.06em;
+  margin-left:4px;
+}
+.ec-entry .rec-bilan-line{color:#c8874a;}
 
 /* ── RECETTES ── */
 .rec-page-inner{padding:0 18px 10px;}
@@ -1144,10 +1152,10 @@ function saAll(q){
   var rs=recipes.filter(function(r){return nrm(r.name).startsWith(nq);})
     .concat(recipes.filter(function(r){return nrm(r.name).includes(nq)&&!nrm(r.name).startsWith(nq);}))
     .slice(0,4).map(function(r){return{id:r.id,name:r.name,cat:r.cat,bilan:r.bilan,note:r.note,_t:'rec'};});
-  // Écarts : seulement ceux avec cases (case-only ou mixtes) — les 100% kcal vont dans la section Écarts du jour
-  var ecMatching=ECARTS.filter(function(e){return e.cases&&nrm(e.name).includes(nq);}).slice(0,4)
+  // Écarts : TOUS (cases-only, mixtes, kcal-only) — l'utilisateur les ajoute via le repas, et c'est l'app qui crée l'entrée auto en section Écarts pour les kcal
+  var ecMatching=ECARTS.filter(function(e){return nrm(e.name).includes(nq);}).slice(0,5)
     .map(function(e){return{name:e.name,cases:e.cases,kcal:e.kcal||0,_t:'ec'};});
-  return fs.concat(rs).concat(ecMatching).slice(0,14);
+  return fs.concat(rs).concat(ecMatching).slice(0,15);
 }
 
 var TODAY=new Date();TODAY.setHours(0,0,0,0);
@@ -1290,6 +1298,13 @@ function renderMeals(){
         ehtml+='<div class="edit-row"><div class="edot" style="background:'+CV[e.cat]+';"></div><span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+e.name+'</span><input type="number" id="eq-'+e.id+'" value="'+e.qty+'" min="0" step="any" style="width:60px;flex:0 0 60px;" onkeydown="if(event.key===\'Enter\')confEdit('+mi+','+e.id+')"/><span class="ulab">'+e.unit+'</span><button onclick="confEdit('+mi+','+e.id+')">OK</button><button class="del-btn" onclick="cancelEdit()">✕</button></div>';
         continue;
       }
+      if(e._t==='ec'){
+        var caseLine=e.bilanTotal&&Object.keys(e.bilanTotal).length?bsL(e.bilanTotal):'';
+        var kcalLine=e.kcal>0?(caseLine?' · ':'')+Math.round(e.kcal)+' kcal':'';
+        var detailLine=caseLine+kcalLine;
+        ehtml+='<div class="rec-entry ec-entry"><div class="rec-entry-top"><div class="rec-entry-l"><div class="rdot" style="background:#c8874a;"></div><span class="rec-entry-name">'+e.name+'</span><span class="ec-badge">écart</span></div><button class="del-btn" onclick="delE('+mi+','+e.id+')">✕</button></div>'+(detailLine?'<div class="rec-bilan-line">'+detailLine+'</div>':'')+'</div>';
+        continue;
+      }
       if(e._t==='rec'){
         var pl=e.parts+' part'+(e.parts>1?'s':'');
         ehtml+='<div class="rec-entry"><div class="rec-entry-top"><div class="rec-entry-l"><div class="rdot"></div><span class="rec-entry-name">'+e.name+'</span><span class="rec-parts">'+pl+'</span></div><button class="del-btn" onclick="delE('+mi+','+e.id+')">✕</button></div><div class="rec-bilan-line">'+bsL(e.bilanTotal)+'</div></div>';
@@ -1364,11 +1379,13 @@ function addRecE(mi){
   meal.entries.push({id:idc++,_t:'rec',name:r.name,parts:pts,bilan:r.bilan,bilanTotal:bilanTotal,cases:0,cat:'recipe'});
   meal.sr=null;meal.sf=null;meal.open=false;hideDrop();render();saveData();saveData();
 }
-// Ajout d'un écart à un repas : décompte cases + crée une entrée auto en Écart pour les kcal supplémentaires
+// Ajout d'un écart à un repas : décompte cases (si présentes) + crée une entrée auto en Écarts du jour pour les kcal supplémentaires.
+// Liaison via _link (id commun) pour propager les suppressions.
 function addEcM(mi){
   var day=getDay(cur),meal=day.meals[mi],se=meal.se;if(!se)return;
   var ec=se.ec,po=se.portions||1;
-  // Calculer cases totales et bilan
+  var linkId=idc++; // id de liaison commun
+  // Cases : décompter du quota du jour
   var bilanTotal={},keys=ec.cases?Object.keys(ec.cases):[];
   for(var i=0;i<keys.length;i++){
     var k=keys[i],val=Math.round(ec.cases[k]*po*100)/100;
@@ -1377,13 +1394,30 @@ function addEcM(mi){
       if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]+val)*1000)/1000;
     }
   }
-  // Ajouter l'entrée comme un "mini-recipe"
-  var entryName=ec.name+(po>1?' × '+po:'');
-  meal.entries.push({id:idc++,_t:'rec',name:entryName,parts:po,bilan:ec.cases||{},bilanTotal:bilanTotal,cases:0,cat:'recipe'});
-  // Si kcal supplémentaires : créer une entrée auto dans la section Écarts
+  // Kcal supplémentaires (au-delà des cases) → entrée auto en Écarts
   var extraKcal=(ec.kcal||0)*po;
+  // Entrée dans le repas : un type 'ec' qu'on reconnaîtra
+  var entryName=ec.name+(po>1?' × '+po:'');
+  meal.entries.push({
+    id:idc++,
+    _t:'ec',
+    _link:linkId,
+    name:entryName,
+    parts:po,
+    bilan:ec.cases||{},
+    bilanTotal:bilanTotal,
+    kcal:extraKcal,
+    cases:0,
+    cat:'ecart'
+  });
   if(extraKcal>0){
-    day.ec.push({id:idc++,name:ec.name+(po>1?' × '+po:'')+' (suppl.)',kcal:Math.round(extraKcal),_auto:true});
+    day.ec.push({
+      id:idc++,
+      _link:linkId,
+      _fromMeal:mi,
+      name:entryName,
+      kcal:Math.round(extraKcal)
+    });
   }
   meal.se=null;meal.sf=null;meal.sr=null;meal.open=false;hideDrop();render();saveData();
 }
@@ -1478,9 +1512,15 @@ function delE(mi,id){
   var day=getDay(cur),meal=day.meals[mi],e=null;
   for(var i=0;i<meal.entries.length;i++){if(meal.entries[i].id===id){e=meal.entries[i];break;}}
   if(!e)return;
-  if(e._t==='rec'){var bkeys=Object.keys(e.bilanTotal||{});for(var i=0;i<bkeys.length;i++){var k=bkeys[i];if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]-e.bilanTotal[k])*1000)/1000;}}
+  // Recette OU écart-mixte/cases : décompter les cases via bilanTotal
+  if(e._t==='rec'||e._t==='ec'){var bkeys=Object.keys(e.bilanTotal||{});for(var i=0;i<bkeys.length;i++){var k=bkeys[i];if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]-e.bilanTotal[k])*1000)/1000;}}
   else if(e.cat!=='V'){day.con[e.cat]=Math.round((day.con[e.cat]-e.cases)*1000)/1000;}
-  meal.entries=meal.entries.filter(function(x){return x.id!==id;});if(editId===id)editId=null;render();saveData();
+  meal.entries=meal.entries.filter(function(x){return x.id!==id;});
+  // Si écart lié → supprimer aussi l'entrée auto dans day.ec
+  if(e._t==='ec'&&e._link!=null){
+    day.ec=day.ec.filter(function(x){return x._link!==e._link;});
+  }
+  if(editId===id)editId=null;render();saveData();
 }
 function onEsrch(val){
   var inp=document.getElementById('esrch');if(!inp)return;getDay(cur).ecf=null;
@@ -1498,7 +1538,29 @@ function onEsrch(val){
 function pickEc(i){var f=eacM[i];if(!f)return;getDay(cur).ecf=f;var el=document.getElementById('esrch');if(el)el.value=f.name;if(document.getElementById('ehint'))document.getElementById('ehint').textContent=f.kcal+' kcal / '+f.unit;if(document.getElementById('eunit'))document.getElementById('eunit').textContent=f.unit;hideDrop();setTimeout(function(){var el2=document.getElementById('eqty');if(el2)el2.focus();},30);}
 function addEcL(){var day=getDay(cur);var kcal=parseFloat(document.getElementById('ekcal').value);if(!kcal||kcal<=0)return;var lab=document.getElementById('elab').value.trim()||'Écart';day.ec.push({id:idc++,name:lab,kcal:kcal});day.eco=false;render();saveData();}
 function addEcA(){var day=getDay(cur),f=day.ecf;if(!f)return;var qty=parseFloat(document.getElementById('eqty').value);if(!qty||qty<=0)return;var kcal=(f.unit==='g'||f.unit==='ml')?f.kcal*qty/100:f.kcal*qty;day.ec.push({id:idc++,name:f.name+' ('+qty+' '+f.unit+')',kcal:Math.round(kcal)});day.eco=false;day.ecf=null;render();saveData();}
-function delEc(id){var day=getDay(cur);day.ec=day.ec.filter(function(e){return e.id!==id;});render();saveData();}
+function delEc(id){
+  var day=getDay(cur);
+  var target=null;
+  for(var i=0;i<day.ec.length;i++){if(day.ec[i].id===id){target=day.ec[i];break;}}
+  if(!target){return;}
+  // Si entrée liée à un repas → supprimer l'entrée jumelle dans le repas (et décompter les cases)
+  if(target._link!=null){
+    for(var mi=0;mi<day.meals.length;mi++){
+      var meal=day.meals[mi];
+      for(var j=0;j<meal.entries.length;j++){
+        var e=meal.entries[j];
+        if(e._link===target._link){
+          var bkeys=Object.keys(e.bilanTotal||{});
+          for(var bi=0;bi<bkeys.length;bi++){var k=bkeys[bi];if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]-e.bilanTotal[k])*1000)/1000;}
+          meal.entries.splice(j,1);
+          break;
+        }
+      }
+    }
+  }
+  day.ec=day.ec.filter(function(e){return e.id!==id;});
+  render();saveData();
+}
 
 document.addEventListener('mousedown',function(e){if(!e.target.closest('#bsSheet')&&!e.target.closest('.fld'))hideDrop();});
 
