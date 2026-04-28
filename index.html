@@ -1149,6 +1149,8 @@ function applyLoadedData(data){
         if(MDEF[mi]){m.il=MDEF[mi].il;m.name=MDEF[mi].name;m.sub=MDEF[mi].sub;m.coll=MDEF[mi].coll;}
       });
       daymap[k]=d;
+      // Recalculer day.con à partir des entries pour corriger toute désynchro éventuelle
+      recalcDayCon(d);
     });
   }
   if(data.recipes_custom&&data.recipes_custom.length){
@@ -1228,6 +1230,27 @@ function getDay(d){
   var k=dk(d);
   if(!daymap[k]){daymap[k]={meals:MDEF.map(function(m){return{name:m.name,sub:m.sub,coll:m.coll,il:m.il,entries:[],open:false,sf:null,sr:null,sv:''};}),con:{P:0,L:0,G:0,F:0,S:0},ec:[],eco:false,ecm:'libre',ecf:null};}
   return daymap[k];
+}
+// Recalcule day.con à partir des entries pour éviter toute désynchro
+function recalcDayCon(day){
+  var con={P:0,L:0,G:0,F:0,S:0};
+  if(!day.meals)return;
+  day.meals.forEach(function(meal){
+    if(!meal.entries)return;
+    meal.entries.forEach(function(e){
+      if(e._t==='rec'||e._t==='ec'){
+        // Recettes et écarts utilisent bilanTotal
+        var bt=e.bilanTotal||{};
+        Object.keys(bt).forEach(function(k){
+          if(con[k]!==undefined)con[k]=Math.round((con[k]+bt[k])*1000)/1000;
+        });
+      }else if(e.cat&&e.cat!=='V'&&e.cat!=='A'&&con[e.cat]!==undefined){
+        // Aliment standard
+        con[e.cat]=Math.round((con[e.cat]+(e.cases||0))*1000)/1000;
+      }
+    });
+  });
+  day.con=con;
 }
 function getQuota(d){
   // Chaque jour part à 0 — pas de report d'un jour à l'autre.
