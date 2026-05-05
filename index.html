@@ -132,12 +132,59 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   padding:18px;
   box-shadow:0 2px 12px rgba(0,0,0,.05);
 }
+.sum-day-row{
+  display:flex;align-items:center;justify-content:center;
+  position:relative;margin-bottom:14px;
+}
 .sum-day{
   font-family:var(--font-display);
   font-size:20px;
   color:var(--text);
   text-align:center;
-  margin-bottom:14px;
+  position:relative;
+  display:inline-block;
+}
+.sum-day.today{
+  animation:todayGlow 3.5s ease-in-out infinite;
+}
+@keyframes todayGlow{
+  0%,100%{text-shadow:0 0 0 rgba(155,114,184,0);}
+  50%{text-shadow:0 0 14px rgba(155,114,184,.4), 0 0 24px rgba(155,114,184,.2);}
+}
+.quota-edit-btn{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(155,114,184,.1);
+  border:1px solid rgba(155,114,184,.3);
+  color:var(--purple);font-size:13px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  padding:0;font-family:var(--font);
+}
+.quota-edit-btn:active{opacity:.7;}
+.quota-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;margin:8px 0 4px;
+}
+.quota-row{
+  display:flex;flex-direction:column;gap:4px;
+  padding:10px;background:#faf7ff;border-radius:10px;
+}
+.quota-row-label{font-size:12px;font-weight:600;}
+.quota-controls{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+}
+.quota-mini{
+  width:30px;height:30px;border-radius:8px;
+  border:1.5px solid var(--border);background:#fff;
+  font-size:16px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;
+  font-family:var(--font);color:var(--text);
+}
+.quota-mini:active{opacity:.7;}
+.quota-mini.disabled{opacity:.3;pointer-events:none;}
+.quota-val{
+  font-size:18px;font-weight:700;font-family:var(--font-display);
+  min-width:24px;text-align:center;color:var(--purple);
 }
 .cats-row{display:flex;gap:10px;margin-bottom:10px;}
 .cats-row.row2{justify-content:center;}
@@ -172,10 +219,16 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 .cat-label{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--text2);white-space:nowrap;}
 .cat-label span.icon{font-size:12px;}
 .boxes{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;}
-.box{width:12px;height:12px;border-radius:3px;border:2px solid;position:relative;overflow:hidden;flex-shrink:0;}
-.box.half::after{content:'';position:absolute;left:0;top:0;width:50%;height:100%;background:currentColor;}
+.box{width:12px;height:12px;border-radius:3px;border:2px solid;position:relative;overflow:hidden;flex-shrink:0;transition:background-color 250ms ease, transform 250ms cubic-bezier(.4,1.6,.6,1);}
+.box.just-filled{animation:boxPop 350ms cubic-bezier(.34,1.56,.64,1);}
+.box.half::after{content:'';position:absolute;left:0;top:0;width:50%;height:100%;background:currentColor;transition:width 200ms ease;}
 .box.carry{opacity:.3;}
 .box.over::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,currentColor 0,currentColor 2px,transparent 2px,transparent 5px);}
+@keyframes boxPop{
+  0%{transform:scale(1);}
+  40%{transform:scale(1.35);}
+  100%{transform:scale(1);}
+}
 
 /* ECARTS BAR */
 .ecarts-bar{
@@ -196,6 +249,11 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   margin-bottom:10px;
   box-shadow:0 1px 6px rgba(0,0,0,.04);
   overflow:hidden;
+  transition:transform 180ms cubic-bezier(.4,0,.2,1), box-shadow 180ms ease;
+}
+.meal-card .meal-top:active{
+  transform:scale(.98);
+  transition:transform 80ms ease;
 }
 .meal-card.coll{background:rgba(255,255,255,.65);backdrop-filter:blur(8px);}
 .meal-card.ec-card{border:1.5px solid #fdd5d5;}
@@ -283,6 +341,7 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
 .ulab{font-size:12px;color:var(--text3);white-space:nowrap;}
 .sub-btn{padding:9px 16px;font-size:13px;border-radius:12px;border:1.5px solid var(--accent2);background:rgba(123,184,154,.12);color:var(--green);cursor:pointer;font-family:var(--font);font-weight:600;white-space:nowrap;}
 .hint-txt{font-size:11px;color:var(--text3);margin-top:4px;}
+.quota-warn{color:#d97070;font-weight:600;}
 
 /* SELECTED FOOD */
 .sfbar{display:flex;align-items:center;justify-content:space-between;background:rgba(123,184,154,.1);border-radius:10px;padding:7px 12px;margin-top:6px;}
@@ -461,6 +520,50 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
   padding:14px 16px;margin-bottom:12px;
   box-shadow:0 1px 4px rgba(0,0,0,.04);
 }
+.goal-empty{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.goal-empty-text{
+  font-size:13px;color:var(--text2);
+}
+.goal-set-btn{
+  padding:9px 14px;background:rgba(155,114,184,.12);
+  color:var(--purple);border:1.5px dashed var(--purple);
+  border-radius:10px;font-size:13px;font-weight:600;
+  font-family:var(--font);cursor:pointer;flex-shrink:0;
+}
+.goal-set-btn:active{opacity:.8;}
+.goal-active{display:flex;flex-direction:column;gap:8px;}
+.goal-active-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.goal-active-info{
+  font-size:14px;color:var(--text);font-weight:600;
+}
+.goal-active-pace{
+  font-size:11px;color:var(--text2);font-weight:400;
+  margin-top:2px;
+}
+.goal-actions-row{display:flex;gap:6px;}
+.goal-mini-btn{
+  width:30px;height:30px;border-radius:8px;
+  border:1px solid var(--border);background:var(--card);
+  cursor:pointer;font-size:12px;display:inline-flex;
+  align-items:center;justify-content:center;padding:0;
+}
+.goal-mini-btn.edit{color:var(--purple);}
+.goal-mini-btn.del{color:var(--red);border-color:#f5d0d0;}
+.goal-status{
+  background:rgba(123,184,154,.1);
+  border:1px solid rgba(123,184,154,.3);
+  border-radius:10px;padding:8px 10px;
+  font-size:12px;color:var(--text);
+  display:flex;flex-direction:column;gap:3px;
+}
+.goal-status.warn{
+  background:rgba(232,168,124,.1);
+  border-color:rgba(232,168,124,.3);
+}
+.goal-status-row{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.goal-status-num{font-weight:700;color:var(--purple);}
 .suivi-section-label{
   font-size:12px;color:var(--text2);font-weight:600;
   margin-bottom:8px;
@@ -694,7 +797,10 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
       </button>
     <div style="padding:0 18px">
         <div class="summary-card">
-          <div class="sum-day" id="sumday">Aujourd'hui</div>
+          <div class="sum-day-row">
+            <div class="sum-day" id="sumday">Aujourd'hui</div>
+            <button class="quota-edit-btn" onclick="openQuotaModal()" aria-label="Modifier les quotas">✏</button>
+          </div>
           <div id="catsbox"></div>
           <div class="ecarts-bar" id="ecartsbar"></div>
         </div>
@@ -736,6 +842,10 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
     <div class="page" id="page-suivi">
       <div style="padding:0 18px 10px">
         <div class="page-header" style="padding-left:0">Mon suivi</div>
+
+        <div class="suivi-card" id="goalCard">
+          <div id="goalContent"></div>
+        </div>
 
         <div class="suivi-card">
           <div class="suivi-section-label">Ajouter une mesure</div>
@@ -843,6 +953,43 @@ body{font-family:var(--font);color:var(--text);font-size:15px;}
     <div class="mactions">
       <button class="mcancel" onclick="closeFoodModal()">Annuler</button>
       <button class="msave" onclick="saveCustomFood()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Objectif de poids -->
+<div class="modal-ov" id="goalmodal" onclick="closeGoalModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle" id="gmTitle">Définir un objectif</div>
+    <div class="mlabel">Poids cible</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input class="minput" id="gmTarget" type="number" min="0" step="0.1" placeholder="65" style="flex:1;"/>
+      <span style="font-size:14px;color:var(--text2);">kg</span>
+    </div>
+    <div class="mlabel">Rythme</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input class="minput" id="gmPace" type="number" min="0" step="0.1" placeholder="0.5" style="flex:1;"/>
+      <span style="font-size:14px;color:var(--text2);">kg / semaine</span>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:6px;font-style:italic;">Le sens (perte ou prise) est déduit automatiquement.</div>
+    <div class="mactions" id="gmActions">
+      <button class="mcancel" onclick="closeGoalModal()">Annuler</button>
+      <button class="msave" onclick="saveGoal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Quotas -->
+<div class="modal-ov" id="quotamodal" onclick="closeQuotaModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">Mes quotas quotidiens</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px;">S'applique à partir d'aujourd'hui (jours futurs inclus). L'historique passé reste inchangé.</div>
+    <div class="quota-grid" id="quotaGrid"></div>
+    <div class="quota-grid" id="quotaEbBox" style="margin-top:0;"></div>
+    <div class="mactions">
+      <button class="mcancel" onclick="resetQuotaToDefault()">Par défaut</button>
+      <button class="mcancel" onclick="closeQuotaModal()">Annuler</button>
+      <button class="msave" onclick="saveQuotas()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1103,7 +1250,7 @@ function signOut(){
 function saveData(){
   if(!currentUser){
     // fallback localStorage
-    try{localStorage.setItem('gladder_v1',JSON.stringify({daymap:daymap,recipes_custom:recipes.filter(function(r){return r.id>=300;}),weights:weights,custom_foods:customFoods}));}catch(e){}
+    try{localStorage.setItem('gladder_v1',JSON.stringify({daymap:daymap,recipes_custom:recipes.filter(function(r){return r.id>=300;}),weights:weights,custom_foods:customFoods,goal:goal,quota_history:quotaHistory}));}catch(e){}
     return;
   }
   setSyncStatus('💾 Sauvegarde...');
@@ -1114,6 +1261,8 @@ function saveData(){
       recipes_custom:recipes.filter(function(r){return r.id>=300;}),
       weights:weights,
       custom_foods:customFoods,
+      goal:goal,
+      quota_history:quotaHistory,
       saved_at:Date.now()
     };
     db.collection('users').doc(currentUser.uid).set(data).then(function(){
@@ -1168,6 +1317,12 @@ function applyLoadedData(data){
   if(data.custom_foods&&data.custom_foods.length){
     customFoods=data.custom_foods.slice();
     customFoods.forEach(function(f){if(f.id>=customFoodId)customFoodId=f.id+1;});
+  }
+  if(data.goal&&typeof data.goal==='object'){
+    goal=data.goal;
+  }
+  if(data.quota_history&&Array.isArray(data.quota_history)){
+    quotaHistory=data.quota_history.slice();
   }
 }
 
@@ -1225,6 +1380,8 @@ var weightId=1;
 var rangeStart=null, rangeEnd=null; // strings 'YYYY-MM-DD' ou null
 var customFoods=[]; // {id, name, cat, unit, per} — aliments ajoutés par l'utilisateur
 var customFoodId=10000;
+var goal=null; // {target:Number, pace:Number, setAt:'YYYY-MM-DD', startKg:Number}
+var quotaHistory=[]; // [{from:'YYYY-MM-DD', P, L, G, F, S}] trié par from croissant. Si vide → BQ par défaut.
 
 function getDay(d){
   var k=dk(d);
@@ -1253,13 +1410,41 @@ function recalcDayCon(day){
   day.con=con;
 }
 function getQuota(d){
-  // Chaque jour part à 0 — pas de report d'un jour à l'autre.
+  // Quota du jour basé sur quotaHistory (entrées datées). Si aucune n'est antérieure ou égale à d, retourne BQ par défaut.
+  var dayKey=dk(d);
+  if(quotaHistory&&quotaHistory.length){
+    // Trouver la dernière entrée avec from <= dayKey
+    var latest=null;
+    for(var i=0;i<quotaHistory.length;i++){
+      var q=quotaHistory[i];
+      if(q.from<=dayKey){
+        if(!latest||q.from>latest.from)latest=q;
+      }
+    }
+    if(latest)return {P:latest.P,L:latest.L,G:latest.G,F:latest.F,S:latest.S};
+  }
   return {P:BQ.P,L:BQ.L,G:BQ.G,F:BQ.F,S:BQ.S};
 }
+// Quota actuel (= quota du jour TODAY) — utilisé dans le modal
+function getCurrentQuota(){
+  return getQuota(TODAY);
+}
 function getWEB(d){
-  // Chaque lundi remet le budget d'écarts à 0 — pas de report d'une semaine à l'autre.
+  // Budget d'écarts hebdo basé sur quotaHistory. Si aucune entrée n'a EB, retourne EB par défaut.
+  var dayKey=dk(d);
+  if(quotaHistory&&quotaHistory.length){
+    var latest=null;
+    for(var i=0;i<quotaHistory.length;i++){
+      var q=quotaHistory[i];
+      if(q.from<=dayKey&&typeof q.EB==='number'){
+        if(!latest||q.from>latest.from)latest=q;
+      }
+    }
+    if(latest)return latest.EB;
+  }
   return EB;
 }
+function getCurrentEB(){return getWEB(TODAY);}
 function getWEU(wm){var t=0;for(var i=0;i<7;i++){var k=dk(addD(dfk(wm),i));if(daymap[k])t+=daymap[k].ec.reduce(function(s,e){return s+e.kcal;},0);}return Math.round(t);}
 
 // ═══════════════════════════════════════
@@ -1307,7 +1492,10 @@ function renderWeek(){
   var bm=getMon(cur),dn=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'],html='';
   for(var i=0;i<7;i++){var d=addD(bm,i),act=dk(d)===dk(cur);html+='<div class="day-pill'+(act?' active':'')+'" onclick="selDay(\''+dk(d)+'\')"><span class="dabbr">'+dn[i]+'</span><span class="dnum">'+d.getDate()+'</span></div>';}
   document.getElementById('wscroll').innerHTML=html;
-  document.getElementById('sumday').textContent=dk(cur)===dk(TODAY)?"Aujourd'hui":['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][cur.getDay()]+' '+cur.getDate();
+  var sumdayEl=document.getElementById('sumday');
+  var isToday=dk(cur)===dk(TODAY);
+  sumdayEl.textContent=isToday?"Aujourd'hui":['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][cur.getDay()]+' '+cur.getDate();
+  if(isToday)sumdayEl.classList.add('today');else sumdayEl.classList.remove('today');
   // Garder le picker calendrier synchronisé sur la date courante
   var cp=document.getElementById('calpick');if(cp)cp.value=dk(cur);
 }
@@ -1331,12 +1519,20 @@ function onCalPick(val){
 // ═══════════════════════════════════════
 // RENDER SUMMARY
 // ═══════════════════════════════════════
+var lastUsed={P:0,L:0,G:0,F:0,S:0};
 function catBlock(cat,day,q){
   var m=CMETA[cat],used=day.con[cat]||0,max=q[cat],base=BQ[cat],total=Math.ceil(Math.max(used,max));
+  var prevUsed=lastUsed[cat]||0;
   var boxes='';
   for(var i=0;i<total;i++){
     if(i+1>max){boxes+='<div class="box over" style="border-color:'+m.border+';color:'+m.color+';border-width:2px;"></div>';}
-    else{var ic=i+1>base,st=used>=i+1?'filled':used>=i+0.5?'half':'empty';boxes+='<div class="box '+st+(ic?' carry':'')+'" style="border-color:'+m.border+';color:'+m.color+';'+(st==='filled'?'background:'+m.color:'')+'"></div>';}
+    else{
+      var ic=i+1>base;
+      var st=used>=i+1?'filled':used>=i+0.5?'half':'empty';
+      // Anime uniquement si cette case est nouvellement cochée
+      var justFilled=(st==='filled'&&i+1>prevUsed)?' just-filled':'';
+      boxes+='<div class="box '+st+(ic?' carry':'')+justFilled+'" style="border-color:'+m.border+';color:'+m.color+';'+(st==='filled'?'background:'+m.color:'')+'"></div>';
+    }
   }
   // Texte du tooltip
   var rem=Math.round((max-used)*100)/100;
@@ -1371,6 +1567,8 @@ function renderSummary(){
   document.getElementById('catsbox').innerHTML=
     '<div class="cats-row">'+catBlock('P',day,q)+catBlock('L',day,q)+'</div>'+
     '<div class="cats-row row2">'+catBlock('G',day,q)+catBlock('F',day,q)+catBlock('S',day,q)+'</div>';
+  // Mémoriser l'état actuel pour comparer au prochain render (pour animer uniquement les nouvelles cases)
+  lastUsed={P:day.con.P||0,L:day.con.L||0,G:day.con.G||0,F:day.con.F||0,S:day.con.S||0};
   var budget=getWEB(cur),used=getWEU(wk(cur)),over=Math.max(0,used-budget),pct=Math.min(100,Math.round(Math.min(used,budget)/budget*100));
   var oTxt=over>0?' <span style="color:#d97070;font-size:11px;">+'+over+' kcal dépassés</span>':'';
   document.getElementById('ecartsbar').innerHTML=
@@ -1431,7 +1629,19 @@ function renderMeals(){
       }else if(sf&&sf.cat==='A'){
         fs='<div class="sfbar"><span class="sfname">'+sf.name+'</span><button class="sfclear" onclick="clearSF('+mi+')">✕</button></div><div class="qty-wrap"><button class="sub-btn" style="flex:1;" onclick="addE('+mi+')">Ajouter</button></div>';
       }else if(sf){
-        fs='<div class="sfbar"><span class="sfname">'+sf.name+'</span><button class="sfclear" onclick="clearSF('+mi+')">✕</button></div><div class="hint-txt">1 case = '+sf.per+' '+sf.unit+'</div><div class="qty-wrap"><input type="number" placeholder="Quantité" min="0" step="any" id="q-'+mi+'" onkeydown="if(event.key===\'Enter\')addE('+mi+')"/><span class="ulab">'+sf.unit+'</span><button class="sub-btn" onclick="addE('+mi+')">Ajouter</button></div>';
+        // Calculer le restant pour cette catégorie
+        var quotaSf=getQuota(cur);
+        var maxCases=Math.max(0,Math.round((quotaSf[sf.cat]-(day.con[sf.cat]||0))*1000)/1000);
+        var hintExtra='';
+        if(maxCases<=0){
+          hintExtra=' <span class="quota-warn">· Quota atteint</span>';
+        }else{
+          var maxQty=Math.round(maxCases*sf.per*100)/100;
+          // Formatage propre (sans décimales inutiles)
+          var maxQtyStr=(maxQty%1===0?maxQty:maxQty.toFixed(1).replace(/\.0$/,''));
+          hintExtra=' <span class="quota-warn">· restant : '+maxQtyStr+' '+sf.unit+'</span>';
+        }
+        fs='<div class="sfbar"><span class="sfname">'+sf.name+'</span><button class="sfclear" onclick="clearSF('+mi+')">✕</button></div><div class="hint-txt">1 case = '+sf.per+' '+sf.unit+hintExtra+'</div><div class="qty-wrap"><input type="number" placeholder="Quantité" min="0" step="any" id="q-'+mi+'" onkeydown="if(event.key===\'Enter\')addE('+mi+')"/><span class="ulab">'+sf.unit+'</span><button class="sub-btn" onclick="addE('+mi+')">Ajouter</button></div>';
       }
       html+='<div class="meal-card'+(meal.coll?' coll':'')+'"><div class="meal-top" onclick="togM('+mi+')"><div class="meal-left"><div class="meal-name">'+meal.name+'</div>'+(meal.sub?'<div class="meal-sub">'+meal.sub+'</div>':'')+'</div><div class="meal-emoji">'+meal.il+'</div></div>'+(meal.entries.length?'<div class="entries">'+ehtml+'</div>':'')+'<div class="meal-divider"></div><div class="add-form"><input class="fld" id="s-'+mi+'" type="text" placeholder="Aliment ou recette…" autocomplete="off" value="'+(sr?sr.recipe.name:se?se.ec.name:sf?sf.name:(meal.sv||''))+'" oninput="onS('+mi+',this.value)" onfocus="onF('+mi+',this)"/>'+fs+'</div></div>';
     }else{
@@ -1472,25 +1682,47 @@ function addRecE(mi){
   meal.entries.push({id:idc++,_t:'rec',name:r.name,parts:pts,bilan:r.bilan,bilanTotal:bilanTotal,cases:0,cat:'recipe'});
   meal.sr=null;meal.sf=null;meal.open=false;hideDrop();render();saveData();saveData();
 }
-// Ajout d'un écart à un repas : décompte cases (si présentes) + crée une entrée auto en Écarts du jour pour les kcal supplémentaires.
+// Ajout d'un écart à un repas avec répartition automatique cases/kcal.
+// Pour chaque catégorie de cases demandée :
+//  - On regarde le budget restant (quota - déjà consommé)
+//  - On consomme jusqu'à ce qu'il reste, le surplus est converti en kcal d'écart (via KCAL_CASE)
+//  - Les kcal natifs de l'écart s'ajoutent toujours intégralement
 // Liaison via _link (id commun) pour propager les suppressions.
 function addEcM(mi){
   var day=getDay(cur),meal=day.meals[mi],se=meal.se;if(!se)return;
   var ec=se.ec,po=se.portions||1;
-  var linkId=idc++; // id de liaison commun
-  // Cases : décompter du quota du jour
-  var bilanTotal={},keys=ec.cases?Object.keys(ec.cases):[];
+  var linkId=idc++;
+  var quota=getQuota(cur);
+  var bilanTotal={};       // cases effectivement décomptées dans le repas
+  var convertedKcal=0;     // kcal issus de cases qui n'ont pas tenu dans le quota
+  var convertedDetail=[];  // détail textuel pour transparence
+  var keys=ec.cases?Object.keys(ec.cases):[];
   for(var i=0;i<keys.length;i++){
-    var k=keys[i],val=Math.round(ec.cases[k]*po*100)/100;
-    if(val>0){
-      bilanTotal[k]=val;
-      if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]+val)*1000)/1000;
+    var k=keys[i];
+    var demand=Math.round(ec.cases[k]*po*100)/100;
+    if(demand<=0)continue;
+    if(quota[k]===undefined){
+      // Catégorie pas dans le quota (ne devrait pas arriver) — ignorer
+      continue;
+    }
+    var available=Math.max(0,Math.round((quota[k]-(day.con[k]||0))*1000)/1000);
+    var taken=Math.min(demand,available);
+    var overflow=Math.round((demand-taken)*1000)/1000;
+    if(taken>0){
+      bilanTotal[k]=taken;
+      day.con[k]=Math.round((day.con[k]+taken)*1000)/1000;
+    }
+    if(overflow>0){
+      var kc=Math.round(overflow*(KCAL_CASE[k]||0));
+      convertedKcal+=kc;
+      var meta=CMETA[k]||{icon:'',label:k};
+      convertedDetail.push(overflow+' '+meta.icon);
     }
   }
-  // Kcal supplémentaires (au-delà des cases) → entrée auto en Écarts
-  var extraKcal=(ec.kcal||0)*po;
-  // Entrée dans le repas : un type 'ec' qu'on reconnaîtra
+  var nativeKcal=(ec.kcal||0)*po;
+  var totalEcartKcal=convertedKcal+nativeKcal;
   var entryName=ec.name+(po>1?' × '+po:'');
+  // Entrée dans le repas
   meal.entries.push({
     id:idc++,
     _t:'ec',
@@ -1499,17 +1731,23 @@ function addEcM(mi){
     parts:po,
     bilan:ec.cases||{},
     bilanTotal:bilanTotal,
-    kcal:extraKcal,
+    kcal:totalEcartKcal,
     cases:0,
     cat:'ecart'
   });
-  if(extraKcal>0){
+  // Entrée auto dans la section Écarts si kcal>0
+  if(totalEcartKcal>0){
+    var ecartName=entryName;
+    if(convertedKcal>0&&nativeKcal===0){
+      // Tout est converti depuis des cases en surplus
+      ecartName+=' (cases→kcal)';
+    }
     day.ec.push({
       id:idc++,
       _link:linkId,
       _fromMeal:mi,
-      name:entryName,
-      kcal:Math.round(extraKcal)
+      name:ecartName,
+      kcal:Math.round(totalEcartKcal)
     });
   }
   meal.se=null;meal.sf=null;meal.sr=null;meal.open=false;hideDrop();render();saveData();
@@ -1801,6 +2039,101 @@ function saveRec(){
 }
 
 // ═══════════════════════════════════════
+// QUOTAS PERSONNALISÉS
+// ═══════════════════════════════════════
+var editingQuotas=null;
+var QUOTA_KEYS=['P','L','G','F','S'];
+var QUOTA_MAX=15; // sécurité — au-delà c'est absurde
+function openQuotaModal(){
+  // Charge les quotas en vigueur aujourd'hui
+  var current=getCurrentQuota();
+  editingQuotas={P:current.P,L:current.L,G:current.G,F:current.F,S:current.S,EB:getCurrentEB()};
+  renderQuotaModal();
+  document.getElementById('quotamodal').classList.add('open');
+}
+function closeQuotaModal(e){
+  if(!e||e.target===document.getElementById('quotamodal')){
+    document.getElementById('quotamodal').classList.remove('open');
+    editingQuotas=null;
+  }
+}
+function renderQuotaModal(){
+  if(!editingQuotas)return;
+  var html='';
+  QUOTA_KEYS.forEach(function(k){
+    var meta=CMETA[k];
+    var v=editingQuotas[k];
+    var minus=v<=0?' disabled':'';
+    var plus=v>=QUOTA_MAX?' disabled':'';
+    html+='<div class="quota-row">'+
+      '<div class="quota-row-label" style="color:'+meta.color+';">'+meta.icon+' '+meta.label+'</div>'+
+      '<div class="quota-controls">'+
+        '<button class="quota-mini'+minus+'" onclick="adjQuota(\''+k+'\',-1)">−</button>'+
+        '<span class="quota-val">'+v+'</span>'+
+        '<button class="quota-mini'+plus+'" onclick="adjQuota(\''+k+'\',1)">+</button>'+
+      '</div>'+
+    '</div>';
+  });
+  document.getElementById('quotaGrid').innerHTML=html;
+  // Ligne Écarts (séparée, pleine largeur, step 50 kcal)
+  var eb=editingQuotas.EB;
+  var ebMinus=eb<=0?' disabled':'';
+  var ebPlus=eb>=3000?' disabled':'';
+  var ebHtml='<div class="quota-row" style="grid-column:1/-1;">'+
+    '<div class="quota-row-label" style="color:#c8874a;">⚠️ Écarts hebdomadaires</div>'+
+    '<div class="quota-controls">'+
+      '<button class="quota-mini'+ebMinus+'" onclick="adjEB(-50)">−</button>'+
+      '<span class="quota-val" style="color:#c8874a;min-width:80px;">'+eb+' kcal</span>'+
+      '<button class="quota-mini'+ebPlus+'" onclick="adjEB(50)">+</button>'+
+    '</div>'+
+  '</div>';
+  document.getElementById('quotaEbBox').innerHTML=ebHtml;
+}
+function adjEB(delta){
+  if(!editingQuotas)return;
+  var v=editingQuotas.EB+delta;
+  if(v<0||v>3000)return;
+  editingQuotas.EB=v;
+  renderQuotaModal();
+}
+function adjQuota(k,delta){
+  if(!editingQuotas)return;
+  var v=editingQuotas[k]+delta;
+  if(v<0||v>QUOTA_MAX)return;
+  editingQuotas[k]=v;
+  renderQuotaModal();
+}
+function resetQuotaToDefault(){
+  if(!editingQuotas)return;
+  QUOTA_KEYS.forEach(function(k){editingQuotas[k]=BQ[k];});
+  editingQuotas.EB=EB;
+  renderQuotaModal();
+}
+function saveQuotas(){
+  if(!editingQuotas)return;
+  var todayKey=dk(TODAY);
+  // Si une entrée existe déjà pour today → la mettre à jour, sinon en créer une nouvelle
+  var existing=null;
+  for(var i=0;i<quotaHistory.length;i++){
+    if(quotaHistory[i].from===todayKey){existing=quotaHistory[i];break;}
+  }
+  if(existing){
+    QUOTA_KEYS.forEach(function(k){existing[k]=editingQuotas[k];});
+    existing.EB=editingQuotas.EB;
+  }else{
+    quotaHistory.push({
+      from:todayKey,
+      P:editingQuotas.P,L:editingQuotas.L,G:editingQuotas.G,
+      F:editingQuotas.F,S:editingQuotas.S,
+      EB:editingQuotas.EB
+    });
+  }
+  document.getElementById('quotamodal').classList.remove('open');
+  editingQuotas=null;
+  saveData();render();
+}
+
+// ═══════════════════════════════════════
 // ALIMENTS CUSTOM
 // ═══════════════════════════════════════
 var editingFoodId=null;
@@ -1982,7 +2315,81 @@ function getRangeWindow(){
   }
   return {start:dateFromIso(sIso),end:dateFromIso(eIso),startIso:sIso,endIso:eIso};
 }
+// ═══════════════════════════════════════
+// OBJECTIF DE POIDS
+// ═══════════════════════════════════════
+function openGoalModal(){
+  var existing=goal;
+  document.getElementById('gmTitle').textContent=existing?'Modifier l\'objectif':'Définir un objectif';
+  document.getElementById('gmTarget').value=existing?existing.target:'';
+  document.getElementById('gmPace').value=existing?existing.pace:'';
+  document.getElementById('goalmodal').classList.add('open');
+  setTimeout(function(){document.getElementById('gmTarget').focus();},50);
+}
+function closeGoalModal(e){
+  if(!e||e.target===document.getElementById('goalmodal'))document.getElementById('goalmodal').classList.remove('open');
+}
+function saveGoal(){
+  var t=parseFloat(document.getElementById('gmTarget').value);
+  var p=parseFloat(document.getElementById('gmPace').value);
+  if(!t||t<=0){alert('Le poids cible doit être un nombre positif.');return;}
+  if(!p||p<=0){alert('Le rythme doit être un nombre positif (en valeur absolue).');return;}
+  // Date du jour + poids actuel (dernière mesure) comme ancrage
+  var ws=weights.slice().sort(function(a,b){return a.date<b.date?-1:1;});
+  var startKg=ws.length?ws[ws.length-1].kg:null;
+  var setAt=isoFromDate(new Date());
+  // Préserver setAt si on modifie un goal existant
+  if(goal&&goal.setAt){setAt=goal.setAt;startKg=goal.startKg;}
+  goal={target:Math.round(t*10)/10,pace:Math.round(p*100)/100,setAt:setAt,startKg:startKg};
+  document.getElementById('goalmodal').classList.remove('open');
+  saveData();renderSuivi();
+}
+function delGoal(){
+  if(!goal)return;
+  if(!confirm('Supprimer l\'objectif ?'))return;
+  goal=null;saveData();renderSuivi();
+}
+function renderGoal(){
+  var el=document.getElementById('goalContent');if(!el)return;
+  if(!goal){
+    el.innerHTML='<div class="goal-empty"><div class="goal-empty-text">🎯 Pas d\'objectif défini</div><button class="goal-set-btn" onclick="openGoalModal()">＋ Définir un objectif</button></div>';
+    return;
+  }
+  // Calcul : poids actuel
+  var ws=weights.slice().sort(function(a,b){return a.date<b.date?-1:1;});
+  var currentKg=ws.length?ws[ws.length-1].kg:null;
+  var html='<div class="goal-active">';
+  html+='<div class="goal-active-top">';
+  html+='<div><div class="goal-active-info">🎯 Objectif : '+goal.target+' kg</div><div class="goal-active-pace">Rythme : '+goal.pace+' kg / semaine</div></div>';
+  html+='<div class="goal-actions-row"><button class="goal-mini-btn edit" onclick="openGoalModal()">✏</button><button class="goal-mini-btn del" onclick="delGoal()">✕</button></div>';
+  html+='</div>';
+  if(currentKg!=null){
+    var diff=Math.round((currentKg-goal.target)*10)/10;
+    var absDiff=Math.abs(diff);
+    var sens=diff>0?'perdre':'prendre';
+    var statusClass=absDiff<0.5?' warn':'';
+    if(absDiff<0.1){
+      html+='<div class="goal-status'+statusClass+'"><div class="goal-status-row"><span>🎉 Objectif atteint !</span></div></div>';
+    }else{
+      // Estimation date d'atteinte
+      var weeksNeeded=absDiff/goal.pace;
+      var daysNeeded=Math.round(weeksNeeded*7);
+      var targetDate=new Date();
+      targetDate.setDate(targetDate.getDate()+daysNeeded);
+      var dateStr=fmtDateFr(isoFromDate(targetDate));
+      html+='<div class="goal-status">';
+      html+='<div class="goal-status-row"><span>Plus que <span class="goal-status-num">'+absDiff+' kg</span> à '+sens+'</span></div>';
+      html+='<div class="goal-status-row"><span style="color:var(--text2);font-size:11px;">Estimation : ~'+dateStr+'</span></div>';
+      html+='</div>';
+    }
+  }else{
+    html+='<div class="goal-status"><div class="goal-status-row"><span style="color:var(--text2);">Ajoute une mesure pour voir ta progression</span></div></div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
 function renderSuivi(){
+  renderGoal();
   var win=getRangeWindow();
   if(!win){
     // aucune mesure du tout
@@ -2025,6 +2432,8 @@ function drawWeightChart(win){
   var W=320,H=180,padL=32,padR=10,padT=18,padB=28;
   var plotW=W-padL-padR,plotH=H-padT-padB;
   var kgs=pts.map(function(p){return p.kg;});
+  // Inclure l'objectif dans le calcul de l'échelle Y pour qu'il soit visible
+  if(goal&&typeof goal.target==='number')kgs.push(goal.target);
   var minK=Math.min.apply(null,kgs),maxK=Math.max.apply(null,kgs);
   var range=maxK-minK;
   if(range<2)range=2;
@@ -2046,6 +2455,13 @@ function drawWeightChart(win){
   }
   function yPos(kg){
     return padT+plotH*(yMax-kg)/(yMax-yMin);
+  }
+  // Ligne objectif
+  var goalLine='';
+  if(goal&&typeof goal.target==='number'){
+    var gy=yPos(goal.target);
+    goalLine='<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="#c8874a" stroke-width="1.5" stroke-dasharray="5,3"/>'+
+             '<text x="'+(W-padR-2)+'" y="'+(gy-4)+'" text-anchor="end" font-size="9" fill="#c8874a" font-family="Arial" font-weight="600">🎯 '+goal.target+' kg</text>';
   }
   var polyPts=pts.map(function(p){return xPos(p.date)+','+yPos(p.kg);}).join(' ');
   var line=pts.length>1?'<polyline points="'+polyPts+'" fill="none" stroke="#9b72b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>':'';
@@ -2100,7 +2516,7 @@ function drawWeightChart(win){
     }
   }
   var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+
-          axes+gridLines+yLabels+line+circles+xLabels+'</svg>';
+          axes+gridLines+yLabels+goalLine+line+circles+xLabels+'</svg>';
   box.innerHTML=svg;
 }
 function renderWeightList(){
