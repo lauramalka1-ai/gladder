@@ -1227,6 +1227,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .auth-user-bar .acct-out:active{opacity:.8}
 /* ── RÉSUMÉ DU JOUR : cases arrondies au lieu de ronds ── */
 .d-p span{border-radius:6px!important}
+
+/* ── MOT DE PASSE OUBLIÉ (V11.5) ── */
+.auth-forgot{text-align:center;margin:-2px 4px 12px;font-size:13px}
+.auth-forgot span{color:var(--text2);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.auth-forgot span:active{opacity:.6}
+.auth-ok{display:none;font-size:13px;line-height:1.4;color:var(--green);background:var(--green-soft);border-radius:14px;padding:10px 14px;margin-bottom:10px;text-align:left}
+.auth-ok.on{display:block}
+.auth-hint{display:none;font-size:14px;line-height:1.45;color:var(--text2);margin-bottom:14px}
+.auth-btn:disabled{opacity:.55;cursor:default}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -1247,9 +1256,16 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   <div class="auth-card">
     <div class="auth-title" id="authTitle">Connexion</div>
     <div class="auth-err" id="authErr"></div>
+    <div class="auth-ok" id="authOk"></div>
+    <div class="auth-hint" id="authHint"></div>
     <input class="auth-input" id="authEmail" type="email" placeholder="Adresse email" autocomplete="email"/>
     <input class="auth-input" id="authPwd" type="password" placeholder="Mot de passe" autocomplete="current-password"/>
     <input class="auth-input" id="authPwd2" type="password" placeholder="Confirmer le mot de passe" style="display:none;" autocomplete="new-password"/>
+    <div class="auth-forgot" id="authForgot"><span onclick="showForgot()">Mot de passe oublié ?</span></div>
+    <div id="authNew" style="display:none;">
+      <input class="auth-input" id="authNewPwd" type="password" placeholder="Nouveau mot de passe" autocomplete="new-password"/>
+      <input class="auth-input" id="authNewPwd2" type="password" placeholder="Confirmer le nouveau mot de passe" autocomplete="new-password"/>
+    </div>
     <button class="auth-btn" id="authSubmit" onclick="authSubmit()">Se connecter</button>
     <div class="auth-switch" id="authSwitch">Pas encore de compte ? <span onclick="toggleAuthMode()">Créer un compte</span></div>
   </div>
@@ -1721,9 +1737,9 @@ function initFirebase(){
   };
   firebaseApp=firebase.initializeApp(cfg);
   db=firebase.firestore();
-  fbAuth=firebase.auth();
+  fbAuth=firebase.auth();checkResetLink();
 
-  fbAuth.onAuthStateChanged(function(user){
+  fbAuth.onAuthStateChanged(function(user){if(user&&authMode==='reset'){fbAuth.signOut();return;}
     if(user){
       currentUser=user;
       document.getElementById('authScreen').style.display='none';
@@ -1740,9 +1756,9 @@ function initFirebase(){
 }
 
 // AUTH UI
-var authIsLogin=true;
+var authIsLogin=true;var authMode='login';var authOobCode='',authResetEmail='',forgotTimer=null;
 function toggleAuthMode(){
-  authIsLogin=!authIsLogin;
+  authIsLogin=!authIsLogin;authMode=authIsLogin?'login':'signup';authUI();
   document.getElementById('authTitle').textContent=authIsLogin?'Connexion':'Créer un compte';
   document.getElementById('authSubmit').textContent=authIsLogin?'Se connecter':'Créer mon compte';
   document.getElementById('authPwd2').style.display=authIsLogin?'none':'block';
@@ -1752,7 +1768,118 @@ function toggleAuthMode(){
   document.getElementById('authErr').textContent='';
 }
 
+
+// ── MOT DE PASSE OUBLIÉ (V11.5) ──
+function $a(i){return document.getElementById(i);}
+function authShow(i,on){$a(i).style.display=on?'block':'none';}
+function authErrMsg(t){$a('authErr').textContent=t||'';}
+function authOkMsg(t){var o=$a('authOk');o.textContent=t||'';o.classList.toggle('on',!!t);}
+function authUI(){
+  var m=authMode;
+  clearInterval(forgotTimer);
+  var b=$a('authSubmit');b.disabled=false;
+  authShow('authEmail',m!=='reset');
+  authShow('authPwd',m==='login'||m==='signup');
+  authShow('authPwd2',m==='signup');
+  authShow('authForgot',m==='login');
+  authShow('authNew',m==='reset');
+  authShow('authHint',m==='forgot'||m==='reset');
+  authErrMsg('');authOkMsg('');
+  var back="<span onclick=\"backToLogin()\">Retour à la connexion</span>";
+  if(m==='forgot'){
+    $a('authTitle').textContent='Mot de passe oublié';
+    $a('authHint').textContent="Entre ton adresse email. On t'envoie un lien pour choisir un nouveau mot de passe.";
+    b.textContent='Envoyer le lien';
+    $a('authSwitch').innerHTML=back;
+  } else if(m==='reset'){
+    $a('authTitle').textContent='Nouveau mot de passe';
+    $a('authHint').textContent=authResetEmail?('Pour le compte '+authResetEmail+'. 6 caractères minimum.'):'Vérification du lien...';
+    b.textContent='Enregistrer';
+    $a('authSwitch').innerHTML=back;
+  } else {
+    var lg=(m==='login');
+    $a('authTitle').textContent=lg?'Connexion':'Créer un compte';
+    b.textContent=lg?'Se connecter':'Créer mon compte';
+    $a('authSwitch').innerHTML=lg
+      ?'Pas encore de compte ? <span onclick="toggleAuthMode()">Créer un compte</span>'
+      :'Déjà un compte ? <span onclick="toggleAuthMode()">Se connecter</span>';
+  }
+}
+function showForgot(){authMode='forgot';authUI();}
+function backToLogin(){
+  if(authMode==='reset'){history.replaceState(null,'',location.pathname);}
+  authMode='login';authIsLogin=true;authUI();
+}
+function forgotCooldown(s){
+  var b=$a('authSubmit'),left=s;
+  b.disabled=true;clearInterval(forgotTimer);
+  function tick(){
+    if(left<=0){clearInterval(forgotTimer);b.disabled=false;b.textContent='Renvoyer le lien';return;}
+    b.textContent='Renvoyer dans '+left+' s';left--;
+  }
+  tick();forgotTimer=setInterval(tick,1000);
+}
+function forgotSubmit(){
+  var b=$a('authSubmit');
+  if(b.disabled)return;
+  var email=$a('authEmail').value.trim();
+  authErrMsg('');authOkMsg('');
+  if(!email||email.indexOf('@')<1){authErrMsg('Entre une adresse email valide.');return;}
+  b.disabled=true;b.textContent='...';
+  function done(){
+    authOkMsg("Si un compte existe avec cette adresse, un email vient de partir. Pense à regarder tes spams.");
+    forgotCooldown(60);
+  }
+  fbAuth.sendPasswordResetEmail(email).then(done).catch(function(e){
+    if(e.code==='auth/user-not-found'){done();return;}
+    b.disabled=false;b.textContent='Envoyer le lien';
+    if(e.code==='auth/invalid-email')authErrMsg('Adresse email invalide.');
+    else if(e.code==='auth/too-many-requests')authErrMsg('Trop de demandes. Réessaie dans quelques minutes.');
+    else if(e.code==='auth/network-request-failed')authErrMsg('Pas de connexion. Réessaie.');
+    else authErrMsg('Erreur: '+e.message);
+  });
+}
+function resetSubmit(){
+  var p=$a('authNewPwd').value,p2=$a('authNewPwd2').value,b=$a('authSubmit');
+  if(b.disabled)return;
+  authErrMsg('');
+  if(p.length<6){authErrMsg('Mot de passe trop court (6 caractères min).');return;}
+  if(p!==p2){authErrMsg('Les mots de passe ne correspondent pas.');return;}
+  b.disabled=true;b.textContent='...';
+  fbAuth.confirmPasswordReset(authOobCode,p).then(function(){
+    history.replaceState(null,'',location.pathname);
+    var mail=authResetEmail;
+    $a('authNewPwd').value='';$a('authNewPwd2').value='';$a('authPwd').value='';
+    authMode='login';authIsLogin=true;authUI();
+    $a('authEmail').value=mail;
+    authOkMsg('Mot de passe modifié. Tu peux te connecter.');
+  }).catch(function(e){
+    b.disabled=false;b.textContent='Enregistrer';
+    if(e.code==='auth/expired-action-code'||e.code==='auth/invalid-action-code'){
+      history.replaceState(null,'',location.pathname);
+      authMode='forgot';authUI();
+      authErrMsg('Ce lien a expiré ou a déjà servi. Demande un nouveau lien.');
+    } else if(e.code==='auth/weak-password')authErrMsg('Mot de passe trop faible.');
+    else if(e.code==='auth/network-request-failed')authErrMsg('Pas de connexion. Réessaie.');
+    else authErrMsg('Erreur: '+e.message);
+  });
+}
+function checkResetLink(){
+  var q=new URLSearchParams(location.search);
+  if(q.get('mode')!=='resetPassword'||!q.get('oobCode'))return;
+  authOobCode=q.get('oobCode');authMode='reset';authResetEmail='';authUI();
+  fbAuth.verifyPasswordResetCode(authOobCode).then(function(email){
+    authResetEmail=email;authUI();
+  }).catch(function(){
+    history.replaceState(null,'',location.pathname);
+    authMode='forgot';authUI();
+    authErrMsg('Ce lien a expiré ou a déjà servi. Demande un nouveau lien.');
+  });
+}
+
 function authSubmit(){
+  if(authMode==='forgot'){forgotSubmit();return;}
+  if(authMode==='reset'){resetSubmit();return;}
   var email=document.getElementById('authEmail').value.trim();
   var pwd=document.getElementById('authPwd').value;
   var pwd2=document.getElementById('authPwd2').value;
@@ -1765,7 +1892,7 @@ function authSubmit(){
   if(authIsLogin){
     fbAuth.signInWithEmailAndPassword(email,pwd).catch(function(e){
       document.getElementById('authSubmit').textContent='Se connecter';
-      if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password')errEl.textContent='Email ou mot de passe incorrect.';
+      if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'||e.code==='auth/invalid-login-credentials')errEl.textContent='Email ou mot de passe incorrect.';
       else errEl.textContent='Erreur: '+e.message;
     });
   } else {
