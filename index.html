@@ -1170,6 +1170,32 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .auth-user-bar{display:flex!important;align-items:center;gap:10px;padding:14px 22px 4px!important}
 .jr-logo{height:42px;width:auto;display:block;margin-right:auto}
 #userEmail{display:none}
+/* ── DATE BAR V10.3 : capsule + points de la semaine ── */
+.date-cap{position:relative;flex:1;height:40px;border-radius:20px;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;color:var(--ink);overflow:hidden;cursor:pointer}
+.date-cap-ico{flex-shrink:0;color:var(--text2)}
+.week-dots{display:flex;justify-content:space-between;padding:0 6px;margin-top:6px}
+.wd{flex:1;min-height:44px;background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:inherit}
+.wd-l{font-size:11px;font-weight:600;color:var(--text2)}
+.wd-dot{display:block;width:8px;height:8px;border-radius:4px;background:#ddd0c2;transition:background-color .3s var(--ease),transform .3s var(--spring)}
+.wd-dot.on{background:var(--ink);transform:scale(1.25)}
+.wd-dot.today:not(.on){background:var(--accent)}
+.wd:active .wd-dot{transform:scale(.8)}
+/* ── RECETTES V10.4 : pastilles, étiquettes, étapes numérotées ── */
+.rchdr{padding:14px 16px;gap:10px}
+.rcname{font-size:16px;font-weight:600;color:var(--ink)}
+.rchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.rchip{display:inline-flex;align-items:center;font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;background:var(--ink);color:#fff}
+.rchip.p{background:var(--accent);color:var(--ink)}
+.rchev{font-size:20px;color:var(--text2);flex-shrink:0;line-height:1;transition:transform .3s var(--ease);display:inline-block;transform:rotate(180deg)}
+.rchev.up{transform:rotate(0)}
+.rcbody{padding:4px 16px 16px}
+.rcbody .rst{font-size:11px;margin:12px 0 8px}
+.ringchips{display:flex;flex-wrap:wrap;gap:6px}
+.ringchip{font-size:13px;font-weight:500;color:var(--ink);background:#F1DFCF;border-radius:12px;padding:4px 10px}
+.rstep{display:flex;gap:10px;margin:0 0 8px;font-size:14px;line-height:1.45;color:var(--ink)}
+.rstep:last-of-type{margin-bottom:0}
+.rn{flex-shrink:0;width:20px;height:20px;border-radius:10px;background:var(--ink);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.rmeta{font-size:12px;font-weight:500;color:var(--text2);margin:10px 0 0}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -1222,13 +1248,14 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       <div class="journal-header">
         <div class="week-nav">
           <button class="week-arrow" onclick="shiftDay(-1)" aria-label="Jour précédent">&#8592;</button>
-          <div class="week-scroll" id="wscroll"></div>
-          <button class="week-arrow" onclick="shiftDay(1)" aria-label="Jour suivant">&#8594;</button>
-          <div class="cal-wrap">
-            <span class="cal-icon" aria-hidden="true">📅</span>
+          <div class="date-cap">
+            <svg class="date-cap-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            <span id="dateCapTxt"></span>
             <input type="date" id="calpick" class="cal-input" onchange="onCalPick(this.value)" aria-label="Choisir une date"/>
           </div>
+          <button class="week-arrow" onclick="shiftDay(1)" aria-label="Jour suivant">&#8594;</button>
         </div>
+        <div class="week-dots" id="wscroll"></div>
       </div>
         <button class="export-btn" onclick="exporterSemainier()">
         📄 Exporter le semainier (.pdf)
@@ -1508,63 +1535,67 @@ var FOODS=[
 var EF=[{name:'Chocolat noir',kcal:550,unit:'g'},{name:'Chips',kcal:530,unit:'g'},{name:'Gâteau',kcal:400,unit:'g'},{name:'Pain au chocolat',kcal:400,unit:'unité'},{name:'Croissant',kcal:406,unit:'unité'},{name:'Verre de vin',kcal:102,unit:'verre'},{name:'Bière',kcal:140,unit:'canette'},{name:'Frites',kcal:312,unit:'g'},{name:'Glace',kcal:150,unit:'boule'},{name:'Soda',kcal:140,unit:'canette'},{name:'Autre (kcal)',kcal:1,unit:'kcal'}];
 
 var recipes=[
-  {id:1,cat:'plats',name:'Timbale de lotte',bilan:{P:2},ing:'4 œufs, 360g lotte, 80g lait concentré',prep:'Cuire lotte. Mélanger. Bain-marie 20mn Th.7/8.',note:'',_o:false},
-  {id:2,cat:'plats',name:'Gratin de fruits de mer',bilan:{P:3,L:0.5,S:0.5},ing:'600g poisson, légumes, 120g gruyère, 400ml lait, 40g maïzéna',prep:'Légumes vapeur + poisson. Béchamel + gruyère. Four Th.6/7 30mn.',note:'',_o:false},
-  {id:3,cat:'plats',name:'Cabillaud à la moutarde',bilan:{P:3},ing:'800g cabillaud, moutarde, vin blanc',prep:'Badigeonner moutarde. Tomates + vin. Four 20mn.',note:'',_o:false},
-  {id:4,cat:'plats',name:'Lapin aux pruneaux',bilan:{P:3.5,F:1},ing:'1kg lapin, 12 pruneaux, vin rouge',prep:'Mariner. Dorer. Cuire 45mn.',note:'3 ou 4P selon poids',_o:false},
-  {id:5,cat:'plats',name:'Lapin sauce piquante',bilan:{P:3.5},ing:'1kg lapin, vin blanc, crème allégée',prep:'Dorer + vin. Cuire 1h. Sauce.',note:'3 ou 4P selon poids',_o:false},
-  {id:6,cat:'plats',name:'Osso bucco',bilan:{P:3},ing:'1kg veau, tomates, légumes, vin blanc',prep:'Revenir. Légumes + vin. Mijoter 1h.',note:'',_o:false},
-  {id:7,cat:'plats',name:'Curry de veau',bilan:{P:3.5},ing:'1.5kg veau, oignons, tomates, curry, yaourt',prep:'Blondir. Dorer. Curry + yaourt. Mijoter 1h30.',note:'3 ou 4P selon poids',_o:false},
-  {id:8,cat:'plats',name:'Bœuf carottes',bilan:{P:3},ing:'500g paleron, 1kg carottes, champignons',prep:'Revenir. Légumes + vin. Mijoter 2h15.',note:'',_o:false},
-  {id:9,cat:'plats',name:'Poulet au citron',bilan:{P:3},ing:'1 poulet, 2 citrons, thym',prep:'Mariner 3-4h. Revenir. Cuire 45mn.',note:'P selon poids',_o:false},
-  {id:10,cat:'plats',name:'Flan de courgettes',bilan:{P:2},ing:'6 œufs, 6 courgettes, 2 oignons',prep:'Cuire légumes. Écraser. Mélanger œufs. Bain-marie 45mn.',note:'',_o:false},
-  {id:11,cat:'plats',name:'Pizza minceur',bilan:{P:3,G:2,S:1},ing:'80g farine, beurre, 240g jambon, 80g gruyère',prep:'Pâte. Garniture. Four 30mn Th.7.',note:'2G (1G si beurre allégé)',_o:false},
-  {id:12,cat:'plats',name:'Quiche sans pâte',bilan:{P:3,L:0.5,S:1},ing:'2 œufs, 200ml lait, 40g farine, 60g jambon, 60g gruyère',prep:'Mélanger. Four 45mn Th.6/7.',note:'',_o:false},
-  {id:13,cat:'plats',name:'Paupiettes de poisson',bilan:{P:3,S:1},ing:'4 filets limande, 40g gruyère, 4 pommes de terre',prep:'Rouler filets + gruyère. Micro-ondes 8mn.',note:'',_o:false},
-  {id:14,cat:'plats',name:'Rôti veau cidre et pommes',bilan:{P:3,F:1},ing:'600g rôti veau, 500g pommes, 30cl cidre',prep:'Dorer. Cidre. Mijoter 45mn.',note:'',_o:false},
-  {id:15,cat:'plats',name:'Gratin pommes de terre tomates',bilan:{P:2,G:2,S:1},ing:'200g pommes de terre, 600g tomates, fromages, huile',prep:'Couches légumes + fromages. Four 1h Th.5.',note:'',_o:false},
-  {id:16,cat:'plats',name:'Hachis parmentier',bilan:{P:4,L:0.5,S:1.5},ing:'100g pommes de terre, chou-fleur, lait, 60g steak haché',prep:'Purée + steak. Couches. Gruyère. Four 30mn.',note:'1 ou 2S selon quantité',_o:false},
-  {id:17,cat:'plats',name:'Saumon vapeur',bilan:{P:3},ing:'400g saumon, cresson, fromage blanc',prep:'Vapeur 6mn. Sauce fromage blanc.',note:'P selon poids',_o:false},
-  {id:18,cat:'plats',name:'Pâtes bolognaises',bilan:{P:3.5,S:1.5},ing:'160g pâtes, 100g steak haché, coulis tomates',prep:'Sauce. Verser sur pâtes.',note:'3-4P, 1-2S',_o:false},
-  {id:19,cat:'plats',name:'Colin en papillote',bilan:{P:3},ing:'4 tranches colin, herbes, jaunes d\'œufs',prep:'Chapelure herbes. Papillote. Four 30mn.',note:'P selon poids',_o:false},
-  {id:20,cat:'plats',name:'Soufflé champignons',bilan:{P:1.5},ing:'400g champignons, 4 œufs, 40g gruyère',prep:'Champignons + jaunes + gruyère. Blancs. Four 15mn.',note:'',_o:false},
-  {id:21,cat:'plats',name:'Soufflé épinards',bilan:{P:2.5},ing:'160g épinards, 8 œufs, 40g gruyère',prep:'Épinards + jaunes + gruyère. Blancs. Four 25mn.',note:'',_o:false},
-  {id:22,cat:'plats',name:'Courgettes à l\'orientale',bilan:{S:1},ing:'Courgettes, pommes de terre, tomates',prep:'Couches dans cocotte. Mijoter 1h.',note:'',_o:false},
-  {id:23,cat:'plats',name:'Filets de lotte vin blanc',bilan:{P:1.5},ing:'600g lotte, court-bouillon fenouil',prep:'Court-bouillon. Sauce fenouillette.',note:'1 ou 2P selon poids',_o:false},
-  {id:24,cat:'plats',name:'Poisson sauce citron',bilan:{P:2},ing:'4 filets poisson, moutarde, citrons',prep:'Pocher. Sauce moutarde + citron.',note:'',_o:false},
-  {id:25,cat:'plats',name:'Tomates aux œufs',bilan:{P:2},ing:'800g tomates, 8 œufs, estragon',prep:'Évider. Farcir. Four 30mn.',note:'',_o:false},
-  {id:30,cat:'sauces',name:'Sauce vinaigrette minceur',bilan:{G:1},ing:'Huile, vinaigre, moutarde, fécule',prep:'5 càc = 1 mat. grasse.',note:'5 càc = 1G',_o:false},
-  {id:31,cat:'sauces',name:'Sauce persil (yaourt)',bilan:{L:1},ing:'1 yaourt, moutarde, persil',prep:'Mélanger.',note:'',_o:false},
-  {id:32,cat:'sauces',name:'Sauce rose (yaourt)',bilan:{L:0.5},ing:'Yaourt, coulis tomate',prep:'Mélanger.',note:'',_o:false},
-  {id:33,cat:'sauces',name:'Sauce ail (yaourt)',bilan:{L:0.5},ing:'1 yaourt, ail, paprika',prep:'Ail + yaourt.',note:'',_o:false},
-  {id:34,cat:'sauces',name:'Sauce moutarde (yaourt)',bilan:{L:1},ing:'1 yaourt, moutarde forte',prep:'Fouetter.',note:'',_o:false},
-  {id:35,cat:'sauces',name:'Sauce tomate',bilan:{},ing:'Tomates pelées, ail',prep:'Cuire 20mn. Mixer.',note:'0 case',_o:false},
-  {id:36,cat:'sauces',name:'Sauce aux oignons',bilan:{},ing:'500g oignons, eau',prep:'Revenir. Mixer.',note:'0 case',_o:false},
-  {id:37,cat:'sauces',name:'Sauce basilic',bilan:{G:1},ing:'Jus tomate, huile d\'olive, basilic',prep:'Fouetter.',note:'',_o:false},
-  {id:38,cat:'sauces',name:'Sauce concombre',bilan:{L:1,G:1},ing:'Concombre, yaourts, huile',prep:'Râper. Mixer.',note:'',_o:false},
-  {id:39,cat:'sauces',name:'Sauce crudités (fb)',bilan:{L:1},ing:'Fromage blanc, moutarde, vinaigre',prep:'Fouetter.',note:'',_o:false},
-  {id:40,cat:'sauces',name:'Sauce échalote',bilan:{P:0.5,L:0.5,G:1},ing:'Beurre, échalotes, jaune d\'œuf, lait',prep:'Fouetter.',note:'',_o:false},
-  {id:41,cat:'sauces',name:'Sauce au fromage',bilan:{P:0.5,L:1,G:1},ing:'Beurre, échalotes, jaune, lait, gruyère',prep:'Velouté + gruyère.',note:'',_o:false},
-  {id:42,cat:'sauces',name:'Sauce curry (fb)',bilan:{L:1},ing:'Fromage blanc, curry',prep:'Curry + fromage blanc.',note:'',_o:false},
-  {id:43,cat:'sauces',name:'Sauce plumetis',bilan:{P:1,L:1},ing:'Yaourt, citron, œufs de lump',prep:'Fouetter.',note:'',_o:false},
-  {id:44,cat:'sauces',name:'Sauce fenouillette',bilan:{P:0.5},ing:'Court-bouillon fenouil, maïzena, fb',prep:'Délayer.',note:'',_o:false},
-  {id:45,cat:'sauces',name:'Sauce maraîchère',bilan:{L:1},ing:'Jus tomate, concombre, fromage faisselle',prep:'Mixer.',note:'',_o:false},
-  {id:46,cat:'sauces',name:'Sauce au céleri',bilan:{P:1,L:1},ing:'Céleri-rave, cornichons, yaourt',prep:'Mixer.',note:'',_o:false},
-  {id:47,cat:'sauces',name:'Sauce cocktail',bilan:{L:0.5},ing:'Fromage blanc, moutarde, ketchup',prep:'Fouetter.',note:'',_o:false},
-  {id:48,cat:'sauces',name:'Sauce au homard',bilan:{L:1,S:1},ing:'Bisque homard, fromage blanc',prep:'Mélanger.',note:'',_o:false},
-  {id:49,cat:'sauces',name:'Sauce artichaut',bilan:{L:1},ing:'Fromage blanc, fonds d\'artichaut',prep:'Mixer.',note:'',_o:false},
-  {id:70,cat:'sauces',name:'Sauce champignon',bilan:{L:0.5},ing:'Champignons, lait, bouillon',prep:'Hacher. Macérer.',note:'',_o:false},
-  {id:50,cat:'desserts',name:'Petits pots crème orange',bilan:{P:0.5,L:1,F:1},ing:'4 oranges, 400ml lait, 2 œufs',prep:'Zestes + lait + œufs. Bain-marie 1h.',note:'',_o:false},
-  {id:51,cat:'desserts',name:'Pommes Tante Lucie',bilan:{F:1.5},ing:'4 pommes, 100g raisin blanc',prep:'Vider pommes. Farcir raisin. Four 45mn.',note:'',_o:false},
-  {id:52,cat:'desserts',name:'Perles de melon fraises',bilan:{F:2.5},ing:'600g melon, 300g fraises',prep:'Billes melon. Coulis fraises.',note:'',_o:false},
-  {id:53,cat:'desserts',name:'Grosse crêpe abricots',bilan:{P:1,L:0.5,G:1,F:1,S:1},ing:'20g farine, 1 œuf, lait, huile, abricots secs',prep:'Mélanger. Reposer 15mn. Cuire.',note:'',_o:false},
-  {id:54,cat:'desserts',name:'Sorbet fruits d\'été',bilan:{F:1.5},ing:'800g fruits, édulcorant',prep:'Mixer. Sorbetière 2-3h.',note:'1 ou 2F',_o:false},
-  {id:55,cat:'desserts',name:'Sorbet cassis',bilan:{F:1.5},ing:'600g cassis, eau',prep:'Jus + eau. Sorbetière 1h30.',note:'1 ou 2F',_o:false},
-  {id:56,cat:'desserts',name:'Glace express',bilan:{L:1,F:1},ing:'Lait concentré, 150g fraises surgelées',prep:'Mixer. Consommer immédiatement.',note:'',_o:false},
-  {id:57,cat:'desserts',name:'Gâteau aux pommes',bilan:{P:0.5,F:1,S:1},ing:'1 yaourt, 80g farine, 1 œuf, 400g pommes',prep:'Mélanger. Pommes. Four 20mn.',note:'',_o:false},
-  {id:58,cat:'desserts',name:'Clafoutis cerises',bilan:{P:1,F:1,S:1},ing:'400g cerises, 3 œufs, lait, 80g farine',prep:'Pâte. Cerises. Four 30-35mn.',note:'',_o:false},
-  {id:59,cat:'desserts',name:'Milk-shake fraises',bilan:{L:2,F:1},ing:'150g fraises, fromage blanc, 25cl lait',prep:'Mixer. Servir immédiatement.',note:'',_o:false},
-  {id:60,cat:'desserts',name:'Milk-shake banane',bilan:{L:2,F:2},ing:'1 banane, fromage blanc, 25cl lait',prep:'Mixer. Servir immédiatement.',note:'',_o:false}
+  {id:1,cat:'plats',name:'Timbale de lotte',bilan:{P:2},ing:'4 œufs, 360 g de lotte, 80 g de lait concentré ½ écrémé non sucré, 5 c à s de coulis de tomates nature, sel, poivre, estragon',prep:'Faire cuire la lotte au court-bouillon.\nMettre tous les ingrédients dans une terrine et mélanger avec la lotte.\nVerser dans un moule à cake.\nMettre au four au bain-marie pendant 20 mn environ, Th. 7/8.',meta:'4 personnes · cuisson 25 à 30 mn env., Th. 7/8',note:'',_o:false},
+  {id:2,cat:'plats',name:'Gratin de fruits de mer',bilan:{P:3,L:0.5,S:0.5},ing:'600 g de poisson maigre (type cabillaud) ou de fruits de mer mélangés (moules / crevettes / poulpes…), légumes (courgettes ou choux-fleurs), ail, oignon, thym, basilic, sel, poivre, noix de muscade, 120 g de gruyère râpé allégé, 400 ml de lait ½ écrémé, 40 g de maïzéna',prep:'Faire cuire les légumes à la vapeur.\nPrendre un plat creux allant au four et y disposer en couches successives les légumes cuits, l\'ail, l\'oignon, les herbes, le sel et le poivre, puis le poisson en filets ou les crustacés.\nFaire une béchamel : mélanger à froid le lait et la maïzéna (pour éviter les grumeaux), puis mettre à feu doux pour faire épaissir. Assaisonner avec sel, poivre et noix de muscade.\nÉtaler cette béchamel sur la préparation précédente, recouvrir avec le gruyère râpé et mettre au four, Th. 6/7, pendant ½ heure.',meta:'4 personnes · cuisson 30 mn env., Th. 6/7',note:'',_o:false},
+  {id:3,cat:'plats',name:'Cabillaud à la moutarde',bilan:{P:3},ing:'800 g de filets de cabillaud, 2 c à s de moutarde forte, 2 oignons, 2 échalotes, 2 dl de vin blanc, 4 tomates, citron, persil, sel, poivre',prep:'Rincer les filets à l\'eau citronnée puis les essuyer soigneusement.\nDans un plat allant au four, faire un lit d\'aromates en déposant les oignons et les échalotes épluchées et émincées, le persil haché.\nBadigeonner les filets de cabillaud de moutarde forte.\nDisposer les filets ainsi préparés sur les aromates.\nCouper les tomates après les avoir lavées et les répartir harmonieusement sur le cabillaud. Verser le vin blanc.\nMettre au four pendant 20 mn, Th. 6/7.',meta:'4 personnes · cuisson 20 mn, Th. 6/7',note:'',_o:false},
+  {id:4,cat:'plats',name:'Lapin aux pruneaux',bilan:{P:3.5,F:1},ing:'1 lapin de 1 kg, 1 carotte, 1 petit oignon, 1 pincée de 4 épices, 1 bouquet garni avec laurier / thym / persil, 1 morceau d\'orange séché, 25 cl de très bon vin rouge, 5 grains de poivre, sel, poivre, 12 pruneaux moyens',prep:'La veille, couper le lapin en morceaux, bien les dégraisser, surtout autour des rognons. Les déposer dans une terrine.\nÉplucher la carotte et l\'oignon, les couper en rondelles. Les ajouter au lapin ainsi que le bouquet garni, le zeste d\'orange, les grains de poivre. Arroser avec le vin.\nMettre la terrine au réfrigérateur toute la nuit.\nLe lendemain, sortir les morceaux de lapin de la marinade, les éponger.\nMettre une cocotte à revêtement anti-adhésif à feu vif et y faire dorer le lapin sans matière grasse (ajouter éventuellement une goutte d\'eau si cela attache).\nFiltrer la marinade, la chauffer, la verser dans la cocotte. Ajouter le bouquet garni, le sel et les 4 épices.\nFaire cuire 45 mn environ à feu doux.\nPendant ce temps, faire gonfler les pruneaux dans de l\'eau tiède. Les égoutter et les mettre sur du papier absorbant, puis les mettre à cuire avec le lapin pendant 15 mn.',meta:'4 personnes · marinade la veille · cuisson 45 mn environ',note:'3 ou 4P selon poids',_o:false},
+  {id:5,cat:'plats',name:'Lapin sauce piquante',bilan:{P:3.5},ing:'1 kg de lapin, 250 ml de vin blanc, Sauce : 2 c à s de crème allégée, Sauce : 1 c à s de moutarde, Sauce : cornichons en rondelles, Sauce : câpres, Sauce : 1 c à c de maïzena pour épaissir',prep:'Faire dorer le lapin dans une cocotte.\nRajouter le vin blanc.\nFaire cuire 1 heure à feu doux.\nMettre le lapin dans un four tiède, sans la sauce.\nMélanger la crème allégée à la sauce, la moutarde, les cornichons en rondelles, les câpres et la maïzena pour épaissir cette sauce.',meta:'4 personnes · cuisson 1 heure à feu doux',note:'3 ou 4P selon poids',_o:false},
+  {id:6,cat:'plats',name:'Osso bucco',bilan:{P:3},ing:'1 kg de jarret de veau ou de sauté de dinde, tomates pelées en boîte avec le jus, courgettes / carottes ou autres légumes, coulis de tomates nature, 1 verre de vin blanc, 1 c à s de fond de veau, oignon, sel, poivre, herbes, bouquet garni',prep:'Faire revenir la viande dans une poêle anti-adhésive sans matière grasse, avec éventuellement une goutte d\'eau ou de bouillon si cela attache.\nFaire dorer l\'oignon de la même façon.\nMettre le tout dans une sauteuse avec le reste des ingrédients.\nLaisser mijoter à feu doux une heure à découvert (cela permet à l\'eau des légumes de s\'évaporer) et vous aurez ainsi une sauce courte et parfumée.',meta:'4 personnes · cuisson 1 h',note:'',_o:false},
+  {id:7,cat:'plats',name:'Curry de veau',bilan:{P:3.5},ing:'1,5 kg de noix de veau (de préférence), 3 gros oignons, 500 g de tomates, 2 gousses d\'ail, 4 c à s de curry, 2 c à c de concentré de tomates, 1 yaourt nature (velouté), eau, sel, poivre, thym, laurier',prep:'Hacher les oignons le plus finement possible. Les faire blondir dans une cocotte anti-adhésive.\nAjouter les morceaux de viande et faire dorer sur toutes leurs faces.\nAjouter le curry en poudre, les tomates coupées en dés, le thym, le laurier, le yaourt et le concentré de tomates et la moitié du pot à yaourt en eau.\nSaler, poivrer, et laisser mijoter pendant 1h30 à 2 h.',meta:'6 personnes · cuisson 1h30 à 2 h',note:'3 ou 4P selon poids',_o:false},
+  {id:8,cat:'plats',name:'Bœuf carottes',bilan:{P:3},ing:'500 g de paleron, 1 kg de carottes, 125 ml d\'eau, coulis de tomates, 2 oignons, 250 g de champignons de Paris (boîte), 125 ml de vin blanc sec, 1 gousse d\'ail, sel, poivre, bouquet garni, 2 c à s de fond de veau',prep:'Éplucher l\'oignon et le détailler. Éplucher et laver les carottes, les couper en fines rondelles.\nEnlever la graisse apparente de la viande et la couper en gros cubes de 5 x 5.\nFaire revenir dans une cocotte anti-adhésive sans matière grasse mais avec une goutte d\'eau ou du bouillon.\nUne fois la viande revenue sur toutes les faces, ajouter l\'oignon et l\'ail et verser le vin blanc, l\'eau, le coulis de tomates, le fond de veau, sel, poivre.\nLaisser mijoter 1 h (ou 35 mn à la cocotte sous pression), puis ajouter les carottes coupées en rondelles, laisser mijoter encore une heure.\nAjouter les champignons, laisser mijoter 15 mn.\nPeut se préparer la veille, c\'est encore meilleur réchauffé !',meta:'4 personnes · cuisson 2h15',note:'',_o:false},
+  {id:9,cat:'plats',name:'Poulet au citron',bilan:{P:3},ing:'1 poulet, 2 citrons, sel, poivre, thym',prep:'Faire mariner le poulet découpé dans le jus de citron avec l\'assaisonnement 3 ou 4 heures.\nFaire revenir les morceaux dans une cocotte anti-adhésive, sans matière grasse.\nAjouter la marinade avec 75 ml d\'eau.\nCuire 45 mn à feu doux, couvert.\nServir avec le jus de la marinade.',meta:'Marinade 3 ou 4 h · cuisson 45 mn',note:'P selon poids',_o:false},
+  {id:10,cat:'plats',name:'Flan de courgettes',bilan:{P:2},ing:'6 œufs, 2 oignons moyens, 6 courgettes moyennes, sel, poivre, herbes',prep:'Faire cuire les courgettes et les oignons à la poêle anti-adhésive sans matière grasse, ou à la cocotte sous pression dans le panier vapeur.\nQuand tout est bien cuit, égoutter les légumes, puis les écraser à la fourchette.\nBattre les 6 œufs en omelette avec sel, poivre, herbes.\nMélanger les légumes écrasés et les œufs. Verser dans un moule à cake.\nMettre 45 mn au four au bain-marie, Th. 6.',meta:'3 personnes · cuisson 45 mn, Th. 6',note:'',_o:false},
+  {id:11,cat:'plats',name:'Pizza minceur',bilan:{P:3,G:2,S:1},ing:'Pâte brisée : 80 g de farine, Pâte brisée : 40 g de beurre, Pâte brisée : sel, Pâte brisée : eau, 400 g de tomates au jus en boîte (égouttées), champignons, 240 g de jambon maigre, 80 g de gruyère râpé, sel, thym, basilic',prep:'Préparer la pâte brisée quelques heures avant utilisation.\nÉtaler la pâte dans un moule à tarte anti-adhésif.\nDisposer dessus les ingrédients dans l\'ordre suivant : les tomates coupées en dés, le jambon coupé en fines lamelles, les champignons, le gruyère râpé, le sel, le thym et le basilic.\nCuire 30 mn au four, Th. 7.',meta:'4 personnes · cuisson 30 mn, Th. 7',note:'2G (1G si beurre allégé)',_o:false},
+  {id:12,cat:'plats',name:'Quiche sans pâte',bilan:{P:3,L:0.5,S:1},ing:'2 œufs, 200 ml de lait ½ écrémé, 40 g de farine, 60 g de jambon maigre, 60 g de gruyère râpé allégé (ou à défaut : 40 g de gruyère normal), poireaux émincés',prep:'Mélanger d\'abord la farine et le lait, puis ajouter les œufs battus, le jambon émincé, les poireaux et le gruyère râpé.\nVerser la préparation dans un moule à tarte et faire cuire au four 45 minutes, Th. 6/7.',meta:'2 personnes · cuisson 45 mn, Th. 6/7',note:'',_o:false},
+  {id:13,cat:'plats',name:'Paupiettes de poisson',bilan:{P:3,S:1},ing:'4 filets de limande, 40 g de gruyère allégé coupé en fines lamelles, sel, poivre, 4 pommes de terre coupées en 4, 4 tomates, persil, rondelles de citron',prep:'Rouler les filets avec le gruyère à l\'intérieur.\nLes disposer dans un plat avec les pommes de terre et les tomates en alternant.\nAu micro-ondes : couvrir et faire cuire 8 minutes, puis laisser reposer 3 ou 4 minutes.\nDécorer avec persil et citron.',meta:'4 personnes · se cuit au micro-ondes, 8 minutes',note:'',_o:false},
+  {id:14,cat:'plats',name:'Rôti veau cidre et pommes',bilan:{P:3,F:1},ing:'1 rôti de veau d\'environ 600 g, 500 g de pommes, 30 cl de cidre brut, 2 oignons, 1 brin de thym, sel, poivre',prep:'Faire revenir dans une cocotte l\'oignon pelé et émincé.\nFaire dorer le rôti en le retournant sur toutes ses faces.\nSaler, poivrer, ajouter le thym et les 30 cl de cidre.\nLaisser mijoter 45 minutes.\nAjouter alors les pommes épluchées et coupées en quartiers.\nPoursuivre la cuisson encore 15 minutes.\nServir le rôti entouré de pommes.',meta:'4 personnes · préparation 10 mn · cuisson 60 mn',note:'',_o:false},
+  {id:15,cat:'plats',name:'Gratin pommes de terre tomates',bilan:{P:2,G:2,S:1},ing:'200 g de pommes de terre, 600 g de tomates, 60 g de cantal, 60 g de gruyère allégé, sel, poivre, thym émietté, 4 c à c d\'huile d\'olive',prep:'Préchauffer le four.\nÉplucher les pommes de terre, les essuyer, les couper en tranches fines.\nLaver, essuyer, épépiner les tomates, les couper en tranches.\nCouper les fromages en lamelles fines.\nDans un plat allant au four, alterner les couches de légumes et de fromages.\nTerminer par une couche de tomates.\nSaler, poivrer, parsemer de thym, arroser avec l\'huile.',meta:'2 personnes · cuisson 1 heure environ, Th. 5 (150°)',note:'',_o:false},
+  {id:16,cat:'plats',name:'Hachis parmentier',bilan:{P:4,L:0.5,S:1.5},ing:'100 g de pommes de terre, ± chou-fleur, 1/8 l de lait écrémé, 20 g de gruyère allégé, 60 g de steak haché, 1 œuf, persil, oignons hachés, sel, poivre',prep:'Mixer les pommes de terre avec les choux-fleurs et l\'œuf pour en faire une purée.\nMélanger le steak à la purée de tomates, puis disposer dans un plat allant au four : 1 couche de purée, 1 couche de viande avec la purée de tomates, 1 couche de purée.\nParsemer la dernière couche de purée de gruyère râpé allégé.\nCuire 30 minutes au four, puis 5 minutes au gril.',meta:'1 personne · four 30 minutes, puis gril 5 minutes',note:'1 ou 2S selon quantité',_o:false},
+  {id:17,cat:'plats',name:'Saumon vapeur',bilan:{P:3},ing:'400 g de saumon frais, 2 bottes de cresson, ciboulette, sel, poivre, 2 tomates, 200 g de fromage blanc 0 %',prep:'Faire préparer par le poissonnier les 400 g de saumon frais sous forme d\'escalopes.\nÉplucher et équeuter les légumes. Laver abondamment dans de l\'eau vinaigrée.\nFaire bouillir 1 litre ½ d\'eau dans la partie basse du couscoussier.\nDans la partie haute, déposer le cresson, couvrir et laisser cuire 6 mn. Puis déposer les escalopes de saumon. Couvrir à nouveau et laisser cuire 6 mn.\nPendant ce temps, préparer la sauce. Éplucher et épépiner les tomates, après les avoir plongées dans l\'eau bouillante pendant 1 minute.\nVerser le fromage blanc dans un bol allant au bain-marie, saler, poivrer, porter l\'eau du bain-marie à ébullition. Lorsque le fromage est chaud, ajouter les tomates coupées en dés.\nPrésentation : présenter en assiette individuelle. Répartir le cresson en lit dans l\'assiette. Au centre, placer les escalopes de saumon. Napper avec la sauce. Saupoudrer de ciboulette hachée.',meta:'4 personnes · préparation et cuisson 45 mn env. · couscoussier ou cuit-vapeur',note:'P selon poids',_o:false},
+  {id:18,cat:'plats',name:'Pâtes bolognaises',bilan:{P:3.5,S:1.5},ing:'80 ou 160 g de pâtes cuites, oignons, ail, ciboulette, purée de tomates, champignons, 100 g de steak haché à 5 % de m.g., Optionnel : 30 g de fromage râpé allégé',prep:'Faire dorer ail, oignons et ciboulette au fond d\'une sauteuse anti-adhésive avec une goutte de bouillon, puis rajouter le coulis de tomates jusqu\'à frémissement.\nQuand tout est bien chaud, émietter à la main le steak haché et le rajouter à la préparation.\nNe pas cesser de tourner pour homogénéiser la sauce.\nQuand tout est cuit (5 à 10 mn), verser le tout sur les pâtes.\nSi vous le désirez, vous pouvez rajouter 30 g de fromage râpé allégé.',meta:'1 personne',note:'3-4P, 1-2S',_o:false},
+  {id:19,cat:'plats',name:'Colin en papillote',bilan:{P:3},ing:'4 tranches de colin de 180 g, 2 jaunes d\'œufs, 50 g de cerfeuil, 20 g de coriandre frais, 50 g de persil, 10 g de thym, sel, poivre',prep:'Nettoyer soigneusement les tranches de colin, puis les essuyer.\nDans la cuve d\'un robot-mixeur, placer le cerfeuil, le persil, la coriandre, le thym, le sel et le poivre. Mixer jusqu\'à l\'obtention d\'un hachis assez fin. Placer le hachis dans une assiette creuse.\nPlacer les 2 jaunes d\'œufs dans une autre assiette creuse.\nTremper successivement les tranches de colin dans les jaunes d\'œufs puis dans la « chapelure » de fines herbes, en couvrant soigneusement toute la surface du poisson.\nPlacer chaque tranche au centre d\'une feuille de papier aluminium, fermer la papillote soigneusement.\nFaire cuire au four pendant 30 minutes, Th. 6.',meta:'4 personnes · cuisson 30 mn env., Th. 6 · 4 carrés de papier aluminium',note:'P selon poids',_o:false},
+  {id:20,cat:'plats',name:'Soufflé champignons',bilan:{P:1.5},ing:'400 g de champignons, 40 g de gruyère râpé allégé, 4 œufs, ail, oignon, persil, laurier, sel, poivre, noix de muscade',prep:'Laver et éplucher les champignons, les couper en lamelles.\nPréparer ail, oignon, persil et les couper finement.\nDans une casserole ou une cocotte en fonte, mettre à cuire les champignons avec l\'ail, l\'oignon et le persil. Saler et poivrer. Aromatiser avec une petite feuille de laurier.\nLorsque la cuisson des champignons est terminée, en garder quelques lamelles pour décorer la surface du soufflé. Hacher finement le reste des champignons. Ajouter un peu d\'ail et de persil haché.\nMettre et mélanger dans une terrine : champignons hachés, ail, persil, les jaunes d\'œufs, aromatiser avec la noix de muscade râpée, et ajouter le gruyère râpé allégé.\nBattre les blancs d\'œufs en neige très ferme, les incorporer au mélange précédent.\nRemplir de ce mélange mousseux, soit un moule à soufflé, soit des ramequins individuels.\nFaire cuire à four chaud (200 °C) pendant 15 mn environ. Servir chaud.',meta:'4 personnes · cuisson 15 mn, four à 200 °C',note:'',_o:false},
+  {id:21,cat:'plats',name:'Soufflé épinards',bilan:{P:2.5},ing:'160 g d\'épinards, 40 g de gruyère allégé râpé, 8 œufs, noix de muscade, sel, poivre',prep:'Faire cuire les épinards à l\'eau salée.\nLes mixer.\nAjouter le gruyère râpé.\nSéparer les blancs des jaunes d\'œufs.\nBattre les jaunes et les incorporer à la purée d\'épinards.\nAjouter la noix de muscade râpée. Saler, poivrer.\nMonter les blancs d\'œufs en neige bien ferme et les incorporer au mélange précédent.\nMettre le tout dans un moule à soufflé.\nFaire cuire au four 25 à 30 mn. Servir à la sortie du four.',meta:'4 personnes · cuisson 25 à 30 minutes',note:'',_o:false},
+  {id:22,cat:'plats',name:'Courgettes à l\'orientale',bilan:{S:1},ing:'4 courgettes, 400 g de pommes de terre, 3 belles tomates, 2 gousses d\'ail, persil, sel, poivre',prep:'Laver les courgettes sans les peler et les détailler en tranches coupées en biais.\nPeler les pommes de terre et les couper en rondelles.\nPeler les tomates, les couper en morceaux.\nDisposer une couche avec la moitié des courgettes.\nHacher l\'ail et le persil, puis parsemer les courgettes du quart de ce hachis. Saler, poivrer.\nRecouvrir avec une couche de pommes de terre. Mettre un peu d\'ail et de persil hachés.\nRecouvrir avec le reste des courgettes puis assaisonner.\nRecouvrir avec le reste des pommes de terre et le reste de l\'ail et du persil.\nEnfin, ajouter la pulpe des tomates et couvrir la cocotte.\nLaisser mijoter 1 heure environ à feu doux.',meta:'4 personnes · cuisson 1 heure à feu doux · cocotte anti-adhésive',note:'',_o:false},
+  {id:23,cat:'plats',name:'Filets de lotte vin blanc',bilan:{P:1.5},ing:'600 g de filets de lotte, ½ citron en rondelles, sel, Court-bouillon : 3 tasses d\'eau, Court-bouillon : 1 tasse de vin blanc, Court-bouillon : ½ bulbe de fenouil coupé en lanières, Court-bouillon : ½ carotte, Court-bouillon : 1 branche de céleri, Court-bouillon : bouquet garni riche en persil, Court-bouillon : sel, Sauce : 1 c à c rase de maïzena, Sauce : 1 bol de court-bouillon, Sauce : 2 c à s de fromage blanc à 0 %',prep:'Dans l\'autocuiseur, mettre tous les éléments du court-bouillon, laisser cuire doucement pendant 10 minutes, sans pression.\nAu fond du panier perforé, disposer une couche de rondelles de citron, puis les morceaux de lotte. Les saler.\nAu bout de 10 minutes de cuisson, ouvrir l\'autocuiseur, y placer le panier garni, en position haute. Refermer et laisser cuire 5 minutes à partir de la mise en pression.\nSauce fenouillette : dans une casserole, délayer 1 c à c rase de maïzena avec 1 bol de court-bouillon au fenouil. Laisser prendre sur un feu doux. Ajouter 2 c à s de fromage blanc à 0 %. Saler, poivrer.\nDisposer la lotte au centre d\'un plat de service. Verser la sauce fenouillette tout autour.',meta:'4 personnes · autocuiseur',note:'1 ou 2P selon poids',_o:false},
+  {id:24,cat:'plats',name:'Poisson sauce citron',bilan:{P:2},ing:'4 filets de poisson de 120 g, 2 c à s de moutarde, 2 citrons, 1 court-bouillon, sel, poivre',prep:'Faire pocher les filets de poisson quelques minutes dans le court-bouillon.\nDans un bol de court-bouillon, ajouter la moutarde et le jus de citron.\nBattre au fouet, saler et poivrer.\nDisposer les filets de poisson sur un plat et napper avec la sauce.\nDécorer avec des quartiers de citron.',meta:'4 personnes',note:'',_o:false},
+  {id:25,cat:'plats',name:'Tomates aux œufs',bilan:{P:2},ing:'800 g de tomates, 8 œufs, estragon haché, sel, poivre',prep:'Couper le dessus des tomates sans le détacher complètement, les évider entièrement avec une cuillère.\nBattre les œufs avec le sel, le poivre et l\'estragon haché.\nFarcir les tomates avec cette préparation.\nRefermer le couvercle des tomates.\nMettre à cuire à four chaud pendant 30 minutes.',meta:'4 personnes · cuisson 30 mn à four chaud',note:'',_o:false},
+  {id:26,cat:'plats',name:'Fondue de lotte',bilan:{P:1.5},ing:'500 g de lotte, carottes, poireaux, persil, bouquet garni, sel, poivre',prep:'Préparer un court-bouillon très relevé.\nCouper la lotte en cubes.\nMettre le court-bouillon dans un poêlon. Porter à ébullition.\nPoser le poêlon au centre de la table et faire cuire vos cubes de lotte durant le repas.\nRéaliser un assortiment de sauces pour déguster avec la fondue : aïoli, sauce rose, sauce hollandaise minceur, sauce au curry, sauce verte, sauce mayonnaise à la tomate, sauce au yaourt écrémé et aux herbes.',meta:'4 personnes',note:'1 ou 2P selon poids',_o:false},
+  {id:30,cat:'sauces',name:'Sauce vinaigrette minceur',bilan:{G:1},ing:'75 cl d\'eau, 15 cl de vinaigre de vin, 150 g d\'huile végétale, 5 c à c de fécule de pomme de terre, 8 c à c de moutarde, 2 c à c de sel fin, 1 c à c de poivre',prep:'Dans une casserole, faire chauffer l\'eau, le sel et le poivre. Délayer la fécule de pomme de terre avec un peu d\'eau puis l\'ajouter à la préparation et porter à ébullition.\nLorsque le mélange épaissit, retirer du feu et laisser refroidir en remuant de temps en temps.\nPendant ce temps, monter la moutarde avec le vinaigre comme pour une mayonnaise, puis incorporer l\'huile petit à petit.\nLorsque le premier mélange est froid, l\'incorporer au second.\nCette vinaigrette peut s\'aromatiser au moment de l\'emploi : ail, persil, échalotes, fromage blanc, ciboulette, etc.',meta:'Pour un litre de sauce · préparation 20 mn, cuisson 5 mn · se conserve 1 mois au réfrigérateur',note:'5 càc = 1G',_o:false},
+  {id:31,cat:'sauces',name:'Sauce persil (yaourt)',bilan:{L:1},ing:'1 pot de yaourt nature, 1 c à s de moutarde, 1 c à c de jus de citron, 1 c à s de persil haché, 1 cornichon haché très fin, sel, poivre',prep:'Mélanger le tout.',meta:'Sauce au yaourt · sauce froide pour relever les viandes froides',note:'',_o:false},
+  {id:32,cat:'sauces',name:'Sauce rose (yaourt)',bilan:{L:0.5},ing:'2 c à s de yaourt nature, 10 cl de coulis de tomate (brique en carton), ½ c à c de moutarde, sel, poivre',prep:'Mélanger le tout.',meta:'Sauce au yaourt · sauce froide, un régal dans les salades à la tomate',note:'',_o:false},
+  {id:33,cat:'sauces',name:'Sauce ail (yaourt)',bilan:{L:0.5},ing:'2 gousses d\'ail, 1 pot de yaourt nature, 1 c à s rase de paprika doux, 1 c à s de ciboulette hachée, poivre',prep:'Réduire les 2 gousses d\'ail en purée.\nFouetter l\'ail avec le yaourt, ajouter et mélanger paprika, ciboulette et poivre.',meta:'Sauce au yaourt · sauce froide, parfume les crudités, les salades et autres plats froids',note:'',_o:false},
+  {id:34,cat:'sauces',name:'Sauce moutarde (yaourt)',bilan:{L:1},ing:'1 pot de yaourt nature, 1 c à s de moutarde forte, 1 c à s de persil haché, sel, poivre',prep:'Fouetter le yaourt, puis ajouter les autres ingrédients.',meta:'Sauce au yaourt · sauce froide accompagnant grillades et crudités',note:'',_o:false},
+  {id:35,cat:'sauces',name:'Sauce tomate',bilan:{},ing:'1 boîte de tomates pelées et concassées, 1 bouquet garni (thym / laurier / persil), 1 ou 2 gousses d\'ail, poivre',prep:'Chauffer les tomates dans une petite casserole, y ajouter le bouquet garni, l\'ail et le poivre.\nFaire cuire 20 mn sur feu doux.\nRetirer le bouquet et mixer.',meta:'Sauce chaude ou froide · se mélange aux pâtes ou au riz (sans ajouter de graisse), parfume les viandes blanches et les volailles',note:'0 case',_o:false},
+  {id:36,cat:'sauces',name:'Sauce aux oignons',bilan:{},ing:'500 g d\'oignons pelés et émincés, 10 cl d\'eau, sel, poivre',prep:'Faire revenir les oignons dans une poêle anti-adhésive, jusqu\'à ce qu\'ils deviennent transparents. Ne pas les laisser dorer.\nLes passer au presse-purée ou les mixer en ajoutant l\'eau. Sel, poivre.\nRéchauffer à feu doux.\nAvec la viande rouge, ajouter un peu d\'estragon. Pour une viande blanche, ajouter 2 ou 3 brins de thym ou de romarin dans la poêle où cuisent les oignons.',meta:'Sauce chaude · parfume les viandes rouges et blanches',note:'0 case',_o:false},
+  {id:37,cat:'sauces',name:'Sauce basilic',bilan:{G:1},ing:'15 cl de jus de tomate, 1 c à s d\'huile d\'olive, 1 c à c de jus de citron, 1 c à s de basilic haché, sel, poivre',prep:'Fouetter tous les ingrédients dans l\'ordre.',meta:'3 personnes · sauce froide, délicieuse avec salade au fromage de chèvre',note:'',_o:false},
+  {id:38,cat:'sauces',name:'Sauce concombre',bilan:{L:1,G:1},ing:'½ concombre, sel fin, 1 gousse d\'ail hachée très fin, 2 grains de poivre écrasés, 1 petite pincée de paprika, 1 c à s d\'huile d\'olive, 2 pots ½ de yaourt, 5 cl de lait',prep:'Éplucher le concombre, le couper en deux dans le sens de la longueur.\nRetirer les pépins avec une cuillère.\nRâper la chair avec la râpe à gros trous. Mettre dans une passoire fine.\nMélanger avec le sel. Poser une assiette dessus et une boîte de conserve (ou un poids) afin que le poids puisse presser la pulpe pour en extraire le jus. Laisser égoutter 20 mn.\nPendant ce temps, mixer l\'ail et le poivre. Ajouter le reste des ingrédients dans l\'ordre et mixer le tout brièvement.\nServir très frais.',meta:'3 personnes · sauce froide accompagnant crudités et viandes froides · servir très frais',note:'',_o:false},
+  {id:39,cat:'sauces',name:'Sauce crudités (fb)',bilan:{L:1},ing:'2 c à s de fromage blanc, 1 c à c de moutarde forte, 1 c à s de vinaigre de vin, 2 c à s d\'eau, 1 c à s d\'estragon / cerfeuil / basilic haché, sel, poivre',prep:'Fouetter le fromage blanc puis ajouter les autres ingrédients dans l\'ordre en fouettant le tout.',meta:'Sauce au fromage blanc · sauce froide',note:'',_o:false},
+  {id:40,cat:'sauces',name:'Sauce échalote',bilan:{P:0.5,L:0.5,G:1},ing:'10 g de beurre, 2 échalotes hachées très fin, 1 jaune d\'œuf, 25 cl de lait écrémé, sel, poivre',prep:'Chauffer dans une petite casserole le beurre et l\'échalote, puis mélanger le jaune d\'œuf et le lait écrémé, sel, poivre.\nFouetter sans arrêt pour obtenir une sauce veloutée.',meta:'2 personnes · sauce chaude pour poissons et viandes blanches',note:'',_o:false},
+  {id:41,cat:'sauces',name:'Sauce au fromage',bilan:{P:0.5,L:1,G:1},ing:'10 g de beurre, 2 échalotes hachées très fin, 1 jaune d\'œuf, 25 cl de lait écrémé, sel, poivre, 1 c à c de moutarde, 50 g de gruyère maigre râpé',prep:'Chauffer dans une petite casserole le beurre et l\'échalote, puis mélanger le jaune d\'œuf et le lait écrémé, sel, poivre.\nFouetter sans arrêt pour obtenir une sauce veloutée.\nPrélever 2 c à s pour diluer la moutarde. Reverser dans la casserole.\nAjouter peu à peu en tournant le gruyère râpé.',meta:'2 personnes · sauce chaude pour volailles, poissons et viandes blanches grillées ou à la vapeur et légumes à la vapeur',note:'',_o:false},
+  {id:42,cat:'sauces',name:'Sauce curry (fb)',bilan:{L:1},ing:'1 c à c de curry, 1 c à s d\'eau, 200 g de fromage blanc, 1 jaune d\'œuf, sel, poivre',prep:'Délayer le curry dans l\'eau. Mélanger au fromage blanc.\nChauffer doucement au bain-marie, saler et poivrer. Ajouter le jaune d\'œuf en tournant jusqu\'à ce que la chaleur épaississe un peu cette sauce.\nPour changer parfum et couleur, remplacer le curry par du paprika.',meta:'2 personnes · sauce chaude à déguster avec viandes, poissons et légumes chauds',note:'',_o:false},
+  {id:43,cat:'sauces',name:'Sauce plumetis',bilan:{P:1,L:1},ing:'1 pot de yaourt nature, 1 c à s de jus de citron, 1 c à s d\'œufs de lump, ½ c à s de cerfeuil haché, sel, poivre',prep:'Fouetter le yaourt avec le jus de citron.\nPuis mélanger délicatement les autres ingrédients.',meta:'Sauce au yaourt · sauce froide accompagnant asperges, poissons ou salade d\'endives',note:'',_o:false},
+  {id:44,cat:'sauces',name:'Sauce fenouillette',bilan:{P:0.5},ing:'1 bol de court-bouillon au fenouil, 1 c à c de maïzena, 2 c à s de fromage blanc, sel, poivre, Court-bouillon : 3 tasses d\'eau, Court-bouillon : 1 tasse de vin blanc, Court-bouillon : ½ bulbe de fenouil coupé en lanières, Court-bouillon : ½ carotte, Court-bouillon : 1 branche de céleri, Court-bouillon : bouquet garni riche en persil, Court-bouillon : sel',prep:'Dans une casserole, délayer 1 c à c rase de maïzena avec 1 bol de « court-bouillon » au fenouil. Laisser prendre sur un feu doux.\nAjouter 2 c à s de fromage blanc. Saler, poivrer.',meta:'Sauce chaude accompagnant les poissons (exemple : filets de lotte au vin blanc)',note:'',_o:false},
+  {id:45,cat:'sauces',name:'Sauce maraîchère',bilan:{L:1},ing:'10 cl de jus de tomate, 3 c à s de concombre pelé / épépiné / dégorgé, 5 cl de jus de citron, 2 c à s de fromage faisselle égoutté, 1 pincée de Cayenne, herbes au choix, sel',prep:'Mixer le concombre, le jus de tomate et le jus de citron. Ajouter le fromage faisselle, la pincée de Cayenne, les herbes et le sel.',meta:'Sauce froide accompagnant légumes, viandes et poissons froids',note:'',_o:false},
+  {id:46,cat:'sauces',name:'Sauce au céleri',bilan:{P:1,L:1},ing:'50 g de céleri-rave, 2 cornichons, 1 échalote, 1 œuf dur haché, 1 c à c de Worcestershire sauce, 1 c à s de basilic ciselé, ½ c à c de feuilles de thym fraîches, 1 yaourt maigre battu, sel',prep:'Mixer le céleri-rave, les cornichons et l\'échalote.\nMettre dans un bol avec l\'œuf.',meta:'Sauce froide accompagnant crudités et viandes froides',note:'',_o:false},
+  {id:47,cat:'sauces',name:'Sauce cocktail',bilan:{L:0.5},ing:'2 c à s de fromage blanc, 1 c à c de moutarde forte, 1 c à s de vinaigre de vin, 2 c à s d\'eau, ketchup, sel, poivre',prep:'Fouetter le fromage blanc puis ajouter les autres ingrédients dans l\'ordre en fouettant le tout.',meta:'Sauce au fromage blanc · sauce froide à déguster avec du crabe ou des crevettes',note:'',_o:false},
+  {id:48,cat:'sauces',name:'Sauce au homard',bilan:{L:1,S:1},ing:'2 cl de bisque de homard concentrée, 200 g de fromage blanc, quelques gouttes d\'eau, 1 c à s de basilic ciselé, ½ c à c de feuilles de thym fraîches',prep:'Battre la bisque de homard pour la lisser. Ajouter le fromage blanc qui sera un peu délayé en ajoutant quelques gouttes d\'eau, puis ajouter les herbes.\nPorter à votre goût (la bisque est déjà salée).',meta:'2 personnes · sauce froide à déguster avec du poisson froid',note:'',_o:false},
+  {id:49,cat:'sauces',name:'Sauce artichaut',bilan:{L:1},ing:'350 g de fromage blanc, 4 fonds d\'artichaut bien tendres, 1 échalote émincée, quelques gouttes de Tabasco (ou 1 pincée de noix de muscade), sel, poivre',prep:'Mixer le fromage blanc avec les fonds d\'artichauts et l\'échalote.\nAjouter le Tabasco (ou la muscade), sel, poivre.',meta:'2 personnes · sauce froide pour assiette anglaise ou assortiment de crudités · servir frais',note:'',_o:false},
+  {id:70,cat:'sauces',name:'Sauce champignon',bilan:{L:0.5},ing:'50 g de champignons de Paris nettoyés, 1 jus de citron, ½ c à c de basilic, ½ c à c de sarriette, 1 cube de bouillon de volaille, 10 cl d\'eau, 10 cl de lait, sel, poivre',prep:'Hacher menu les champignons. Les mélanger avec le jus de citron, le basilic et la sarriette. Laisser macérer 2 heures.\nSur feu moyen-vif, diluer le cube de bouillon de volaille dans les 10 cl d\'eau bouillante. Ajouter le lait.\nHors du feu, ajouter les champignons. Sel, poivre.',meta:'Sauce chaude accompagnant légumes vapeur, viandes blanches et poissons',note:'',_o:false},
+  {id:71,cat:'sauces',name:'Sauce aux câpres',bilan:{P:0.5,L:0.5,G:1},ing:'10 g de beurre, 2 échalotes hachées très fin, 1 jaune d\'œuf, 25 cl de lait écrémé, sel, poivre, 2 c à c de câpres, 1 c à c de vinaigre',prep:'Chauffer dans une petite casserole le beurre et l\'échalote, puis mélanger le jaune d\'œuf et le lait écrémé, sel, poivre.\nFouetter sans arrêt pour obtenir une sauce veloutée.\nAjouter les câpres et le vinaigre.',meta:'2 personnes · sauce chaude pour poissons et leurs légumes',note:'',_o:false},
+  {id:72,cat:'sauces',name:'Sauce à l\'anchois',bilan:{P:0.5,L:0.5,G:1},ing:'10 g de beurre, 2 échalotes hachées très fin, 1 jaune d\'œuf, 25 cl de lait écrémé, 1 c à c de crème d\'anchois en tube',prep:'Chauffer dans une petite casserole le beurre et l\'échalote, puis mélanger le jaune d\'œuf et le lait écrémé. Fouetter sans arrêt pour obtenir une sauce veloutée.\nPrélever 2 c à s pour diluer la crème d\'anchois. Reverser dans la casserole et mélanger.\nAttention, ne pas saler car la crème d\'anchois l\'est déjà.',meta:'2 personnes · sauce chaude pour relever les poissons et leurs légumes',note:'',_o:false},
+  {id:50,cat:'desserts',name:'Petits pots crème orange',bilan:{P:0.5,L:1,F:1},ing:'4 belles oranges non traitées, 400 ml de lait écrémé liquide, 2 œufs entiers, édulcorant',prep:'Peler les oranges à l\'aide d\'un couteau économe. Blanchir les zestes pendant 10 mn à l\'eau bouillante. Les égoutter et les hacher très finement.\nDélayer l\'édulcorant et le lait. Dans un autre saladier, battre les œufs entiers, les verser dans le lait ; passer le tout au tamis et ajouter les zestes d\'orange.\nRemplir les petits pots de cette préparation. Cuire au bain-marie 1 heure à feu doux. Mettre à refroidir.\nPendant ce temps, finir de peler les oranges pour retirer les quartiers. Recueillir dans un bol le jus qui s\'écoule pendant l\'opération.\nPour le service, démouler chaque petit pot de crème sur une assiette. Décorer avec des quartiers d\'orange disposés en rosaces. Arroser avec le jus recueilli.',meta:'4 personnes · préparation 20 mn · cuisson 1 heure, Th. 4 · petits pots ou ramequins, plat pour bain-marie',note:'',_o:false},
+  {id:51,cat:'desserts',name:'Pommes Tante Lucie',bilan:{F:1.5},ing:'4 pommes, 100 g de raisin blanc',prep:'Sans peler les pommes, les vider soigneusement et les piquer avec une fourchette pour éviter qu\'elles n\'éclatent.\nCouper les grains de raisin en morceaux en veillant à ce qu\'il ne reste plus de pépin mais en recueillant le jus.\nFarcir chaque pomme avec le raisin.\nLes placer dans un plat allant au four.\nLes arroser de jus de raisin.\nLaisser cuire à four doux pendant ¾ d\'heure.',meta:'4 personnes · préparation 10 mn · cuisson 45 mn, Th. 5 · plat allant au four',note:'',_o:false},
+  {id:52,cat:'desserts',name:'Perles de melon fraises',bilan:{F:2.5},ing:'300 g de fraises, 600 g de melon, 1 c à s de jus de citron, 3 feuilles de gélatine',prep:'Détailler la pulpe du melon en petites boules à l\'aide d\'une cuillère parisienne.\nRépartir ces perles dans des coupes et les tenir au frais.\nLaver les fraises, les équeuter et les passer au mixer.\nRecueillir la purée obtenue et la mélanger au jus de citron.\nFaire ramollir les feuilles de gélatine dans un peu d\'eau froide environ 10 mn, ajouter le coulis de fraises.\nRéchauffer jusqu\'à ce que le mélange épaississe sans laisser bouillir.\nRetirer du feu et laisser tiédir.\nNapper les perles de melon avec ce coulis.\nServir très frais.',meta:'1 personne',note:'',_o:false},
+  {id:53,cat:'desserts',name:'Grosse crêpe abricots',bilan:{P:1,L:0.5,G:1,F:1,S:1},ing:'20 g de farine, 1 œuf, 12,5 cl de lait écrémé, 1 c à c d\'huile, 20 g d\'abricots secs hachés, Facultatif : 2 c à c de rhum, Facultatif : 2 c à c de Candérel',prep:'Dans une terrine, mélanger la farine avec l\'œuf, le lait et l\'huile (ajouter du rhum : facultatif).\nAjouter les abricots secs et laisser reposer ¼ d\'heure.\nFaire chauffer une poêle anti-adhésive, y verser la pâte.\nCuire jusqu\'à ce que la crêpe se décolle facilement.\nLa retourner et terminer la cuisson.\nFacultatif : saupoudrer de sucre, enrouler la crêpe.\nLa manger chaude ou froide.\nVariante : à la place du lait et des abricots, mettre 1 yaourt allégé au fruit (on économise ainsi 1 case fruit).',meta:'1 personne · poêle anti-adhésive',note:'',_o:false},
+  {id:54,cat:'desserts',name:'Sorbet fruits d\'été',bilan:{F:1.5},ing:'800 g de fruits (fraises / framboises / myrtilles / pêches / abricots…), édulcorant',prep:'Mixer les fruits et les passer au chinois.\nAjouter l\'édulcorant.\nMettre en sorbetière pendant 2 à 3 heures.',meta:'4 personnes',note:'1 ou 2F',_o:false},
+  {id:55,cat:'desserts',name:'Sorbet cassis',bilan:{F:1.5},ing:'600 g de cassis, 300 g d\'eau, édulcorant',prep:'Extraire le jus du cassis.\nLe passer, ajouter l\'eau, et l\'édulcorant selon le goût.\nMettre à glacer en sorbetière au moins 1h30.\nCette recette peut se faire également avec des groseilles.',meta:'4 personnes',note:'1 ou 2F',_o:false},
+  {id:56,cat:'desserts',name:'Glace express',bilan:{L:1,F:1},ing:'80 g de lait concentré ½ écrémé non sucré, 150 g de fraises ou framboises SURGELÉES, Candérel selon goût',prep:'Mixer les fruits au robot avec le lait et le Candérel.\nNE PAS METTRE AU CONGÉLATEUR.\nCONSOMMER IMMÉDIATEMENT.',meta:'1 personne · préparation 20 mn',note:'',_o:false},
+  {id:57,cat:'desserts',name:'Gâteau aux pommes',bilan:{P:0.5,F:1,S:1},ing:'1 yaourt goût bulgare, 80 g de farine, 1 œuf, 400 g de pommes, 1½ c à c de levure chimique, 1 c à c de beurre, 3 c à s de Candérel, ½ c à c de cannelle et/ou vanille en poudre',prep:'Préchauffer le four Th. 7. Mélanger l\'œuf avec le yaourt, le Candérel, la cannelle/vanille, la farine et la levure.\nVerser cette pâte dans un moule à manqué de taille moyenne et à revêtement antiadhésif.\nPeler les pommes, les couper en quartiers et disposer ceux-ci sur la pâte, les laisser s\'enfoncer légèrement, mais ne pas appuyer.\nParsemer le dessus d\'une c à c de Candérel et de petites noisettes de beurre.\nCuire 20 minutes environ dans un four chaud.\nÀ déguster de préférence tiède.',meta:'4 personnes · cuisson 20 mn, Th. 7',note:'',_o:false},
+  {id:58,cat:'desserts',name:'Clafoutis cerises',bilan:{P:1,F:1,S:1},ing:'400 g de cerises noires (ou de prunes), 3 œufs, 1 dl de lait ½ écrémé, 80 g de farine, 15 g de sucre Candérel, 1 sachet de levure chimique, vanille en poudre',prep:'Ne pas enlever les noyaux car le jus en se répandant empêcherait la pâte de bien lever.\nAmener doucement le lait à ébullition dans une casserole.\nCasser les œufs dans un saladier, mélanger au fouet ou à la fourchette, ajouter le sucre. Tamiser ensemble la farine et la levure. Ajouter le tout peu à peu au mélange œufs-sucre en travaillant avec une spatule en bois, de façon à obtenir une préparation bien homogène.\nDès que la pâte est finie de travailler, verser le lait chaud dessus peu à peu en travaillant énergiquement.\nLaver les cerises, retirer les queues et essuyer. Garnir le fond du moule avec les fruits de façon à recouvrir les cerises, faire cuire 5 mn à puissance maximale, puis 25 à 30 mn, Th. 6.\nServir encore tiède (cela a le goût du flan).',meta:'4 personnes · préparation 15 mn · cuisson 30-35 mn, Th. 6 · moule à manqué à bord haut (en verre)',note:'',_o:false},
+  {id:59,cat:'desserts',name:'Milk-shake fraises',bilan:{L:2,F:1},ing:'150 g de fraises (fraîches ou surgelées), 100 g de fromage blanc à 10 % de M.G., 25 cl de lait écrémé, Candérel, 1 filet de jus de citron, 1 glaçon',prep:'Laver, égoutter, puis équeuter les fraises.\nDans le bol du mixeur, mettre les fraises, le filet de jus de citron, le sucre, le lait écrémé, le fromage blanc et le glaçon. Réduire en purée, puis continuer de mélanger pendant 1 minute à petite vitesse, afin de rendre l\'ensemble un peu mousseux.\nRépartir dans deux grands verres à jus de fruits.\nServir immédiatement avec une paille.',meta:'1 personne',note:'',_o:false},
+  {id:60,cat:'desserts',name:'Milk-shake banane',bilan:{L:2,F:2},ing:'1 banane (160 g), 100 g de fromage blanc à 10 % de M.G., 25 cl de lait écrémé, extrait de vanille liquide, 1 glaçon',prep:'Introduire dans le bol du mixeur : la banane coupée en morceaux, le fromage blanc, le lait écrémé, quelques gouttes d\'extrait de vanille et un glaçon.\nBroyer puis mélanger quelques instants à petite vitesse, afin que l\'ensemble soit légèrement mousseux.\nVerser dans deux grands verres à jus de fruits.\nServir avec une paille.',meta:'1 personne',note:'',_o:false},
+  {id:61,cat:'desserts',name:'Milk-shake cappuccino',bilan:{},ing:'2 tasses de café très très fort, 80 g de fromage blanc à 20 % de M.G., 80 g de lait concentré ½ écrémé non sucré, 2 c à c rases de Candérel en poudre, 1 glaçon',prep:'Introduire dans le bol du mixeur : le café très fort, le fromage blanc, le lait, le sucre et le glaçon.\nBroyer, puis mélanger pendant 2 minutes à petite vitesse, pour obtenir un breuvage mousseux.\nRépartir dans deux grands verres à jus de fruits.\nServir immédiatement avec une paille.',meta:'1 personne',note:'Cases non indiquées dans le PDF',_o:false}
 ];
 
 var RCAT=[{key:'plats',label:'Plats',e:'🍲'},{key:'sauces',label:'Sauces',e:'🥣'},{key:'desserts',label:'Desserts',e:'🍮'},{key:'mes',label:'Mes recettes',e:'📒'}];
@@ -1960,9 +1991,12 @@ if(window.visualViewport){window.visualViewport.addEventListener('resize',functi
 // ═══════════════════════════════════════
 function renderWeek(){
   // La barre affiche toujours la semaine (lundi-dimanche) qui contient `cur`.
-  var bm=getMon(cur),dn=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'],html='';
-  for(var i=0;i<7;i++){var d=addD(bm,i),act=dk(d)===dk(cur);html+='<div class="day-pill'+(act?' active':'')+'" onclick="selDay(\''+dk(d)+'\')"><span class="dabbr">'+dn[i]+'</span><span class="dnum">'+d.getDate()+'</span></div>';}
+  var bm=getMon(cur),dl=['L','M','M','J','V','S','D'],html='';
+  for(var i=0;i<7;i++){var d=addD(bm,i),k=dk(d),act=k===dk(cur),tod=k===dk(TODAY);html+='<button class="wd" onclick="selDay(\''+k+'\')" aria-label="'+d.getDate()+'"><span class="wd-l">'+dl[i]+'</span><i class="wd-dot'+(act?' on':'')+(tod?' today':'')+'"></i></button>';}
   document.getElementById('wscroll').innerHTML=html;
+  var wdN=['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'],moN=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  var capEl=document.getElementById('dateCapTxt');
+  if(capEl)capEl.textContent=wdN[cur.getDay()]+' '+cur.getDate()+' '+moN[cur.getMonth()];
   var sumdayEl=document.getElementById('sumday');
   var isToday=dk(cur)===dk(TODAY);
   sumdayEl.textContent=isToday?"Aujourd'hui":['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][cur.getDay()]+' '+cur.getDate();
@@ -2533,8 +2567,12 @@ function renderRecList(k){
   var list=recipes.filter(function(r){return r.cat===k;}),el=document.getElementById('rlistitems');
   if(!list.length){el.innerHTML='<div style="font-size:13px;color:#a89890;padding:16px 0;text-align:center;">'+(k==='mes'?'Ajoutez vos propres recettes !':'Aucune recette.')+'</div>';return;}
   el.innerHTML=list.map(function(r){var isOwn=r.id>=300;
-    return'<div class="rcard"><div class="rchdr" onclick="togRec('+r.id+')"><div style="flex:1"><div class="rcname">'+r.name+'</div><div class="rcbilan">Par part : '+bsL(r.bilan)+(r.note?' · <em>'+r.note+'</em>':'')+'</div></div><span style="font-size:12px;color:#a89890;flex-shrink:0;">'+(r._o?'▲':'▼')+'</span></div>'+
-    '<div class="rcbody'+(r._o?' open':'')+'"><div class="rst">Ingrédients</div><div class="ring">'+(r.ing||'—')+'</div>'+(r.prep?'<div class="rst">Préparation</div><div class="rprep">'+r.prep+'</div>':'')+(isOwn?'<button class="rdelbtn" onclick="delRec('+r.id+')">Supprimer</button>':'')+'</div></div>';
+    var chips=Object.keys(r.bilan||{}).filter(function(k){return r.bilan[k]>0;}).map(function(k,i){return '<span class="rchip'+(k==='P'?' p':'')+'">'+String(r.bilan[k]).replace('.',',')+' '+CL[k]+'</span>';}).join('');
+    if(!chips)chips='<span class="rchip">Aucune case</span>';
+    var ings=(r.ing||'').split(/\n|,\s+/).map(function(x){return x.trim();}).filter(Boolean).map(function(x){return '<span class="ringchip">'+x+'</span>';}).join('');
+    var pp=(r.prep||'');var steps=(pp.indexOf('\n')>-1?pp.split('\n'):pp.replace(/([.!?])\s+/g,'$1|').split('|')).map(function(x){return x.trim();}).filter(Boolean).map(function(x,i){return '<div class="rstep"><span class="rn">'+(i+1)+'</span><span>'+x+'</span></div>';}).join('');
+    return'<div class="rcard"><div class="rchdr" onclick="togRec('+r.id+')"><div style="flex:1"><div class="rcname">'+r.name+'</div><div class="rchips">'+chips+'</div>'+(r.note?'<div class="rcbilan"><em>'+r.note+'</em></div>':'')+'</div><span class="rchev'+(r._o?' up':'')+'" aria-hidden="true">&#8963;</span></div>'+
+    '<div class="rcbody'+(r._o?' open':'')+'">'+(r.meta?'<div class="rmeta">'+r.meta+'</div>':'')+'<div class="rst">Ingrédients</div><div class="ringchips">'+(ings||'—')+'</div>'+(steps?'<div class="rst" style="margin-top:14px">Préparation</div>'+steps:'')+(isOwn?'<button class="rdelbtn" onclick="delRec('+r.id+')">Supprimer</button>':'')+'</div></div>';
   }).join('');
 }
 function togRec(id){for(var i=0;i<recipes.length;i++){if(recipes[i].id===id){recipes[i]._o=!recipes[i]._o;break;}}if(curRecCat)renderRecList(curRecCat);}
@@ -3298,30 +3336,36 @@ function _genererPDF() {
   var weekLabel = 'du '+fmtDate(bm)+' au '+fmtDate(addD(bm,6));
 
   function makeBoxes(used, quota) {
-    if (quota === null) return 'À volonté';
-    var filled = Math.min(Math.round(used), quota);
-    var s = '';
-    for (var i = 0; i < quota; i++) { s += (i < filled) ? '■' : '□'; if(i<quota-1)s+=' '; }
-    return s + '  ' + used + '/' + quota;
+    if (quota === null) return '<span class="avol">à volonté</span>';
+    var full=Math.min(Math.floor(used),quota), half=(used-full>=0.5&&full<quota)?1:0, q='';
+    for (var i=0;i<quota;i++){ q+='<span class="sq'+(i<full?' f':(i===full&&half?' h':''))+'"></span>'; }
+    return q+'<span class="qn'+(used>quota?' over':'')+'">'+(Math.round(used*10)/10)+'/'+quota+'</span>';
   }
 
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>';
-  html += '@page{size:A4 portrait;margin:8mm;}';
-  html += 'body{font-family:Arial,sans-serif;font-size:8px;margin:0;padding:12px;border:4px solid #c9b3e8;border-radius:6px;min-height:calc(100vh - 40px);box-sizing:border-box;}';
-  html += 'h1{font-size:13px;color:#5c2d8a;margin:0 0 6px;}';
-  html += 'table{width:100%;border-collapse:collapse;margin-bottom:4px;table-layout:fixed;}';
-  html += 'td{padding:3px 5px;border:1.8px solid #888;vertical-align:top;word-wrap:break-word;overflow:hidden;}';
-  html += '.jour-hdr td{font-weight:bold;font-size:10px;color:#000;border-color:#666;}';
-  html += '.jour-name{font-size:11px!important;}';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Semainier</title><style>';
+  html += '@page{size:A4 portrait;margin:6mm;}';
+  html += '*{box-sizing:border-box;}';
+  html += 'body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#141414;margin:0;padding:10px;background:#fff;}';
+  html += '#sheet{width:740px;margin:0 auto;}';
+  html += 'h1{font-size:15px;font-weight:bold;margin:0 0 8px;}';
+  html += 'table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 7px;page-break-inside:avoid;break-inside:avoid;}';
+  html += 'td{padding:2px 4px;border-bottom:.5px solid #c9c9c9;border-left:.5px solid #c9c9c9;vertical-align:middle;overflow-wrap:anywhere;line-height:1.2;}';
+  html += 'td:first-child{border-left:none;}';
+  html += '.jour-hdr td{background:#141414;color:#fff;border:none;font-weight:bold;font-size:9px;text-align:center;padding:4px;}';
+  html += '.jour-hdr td.jour-name{font-size:13px;text-align:left;padding-left:8px;}';
   html += '.cat-name{font-weight:bold;}';
-  html += '.boxes{font-family:monospace;font-size:7px;white-space:nowrap;}';
-  html += '.no-border{border:none!important;background:white!important;height:4px;}';
-  html += '.ecarts-row td{font-weight:bold;font-size:10px;background:#ffe8e8!important;color:#c0392b;border:2px solid #c0392b;}';
-  html += '</style></head><body>';
+  html += '.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;}';
+  html += '.boxes{white-space:nowrap;}';
+  html += '.sq{display:inline-block;width:8px;height:8px;border:1px solid #141414;margin-right:3px;vertical-align:middle;}';
+  html += '.sq.f{background:#141414;}.sq.h{background:linear-gradient(90deg,#141414 50%,#fff 50%);}';
+  html += '.qn{margin-left:3px;color:#6b6c6e;font-size:9px;}.qn.over{color:#c0392b;font-weight:bold;}';
+  html += '.avol{color:#6b6c6e;font-style:italic;}';
+  html += '.ecarts-row td{font-weight:bold;font-size:11px;background:#fdecea;color:#c0392b;border:.5px solid #c0392b;padding:5px 6px;}';
+  html += '</style></head><body><div id="sheet">';
   html += '<h1>Gladder — Semainier ' + weekLabel + '</h1>';
 
   // Column widths
-  var cw = ['16%','12%','12%','8%','12%','8%','12%','10%'];
+  var cw = ['14%','14%','12%','12%','12%','12%','12%','12%'];
 
   for (var ji = 0; ji < 7; ji++) {
     var jourDate = addD(bm, ji);
@@ -3348,9 +3392,9 @@ function _genererPDF() {
     html += '</colgroup>';
 
     // Header
-    html += '<tr class="jour-hdr" style="background:'+jc+';">';
-    html += '<td class="jour-name" colspan="2">'+JOURS_FR[ji]+'</td>';
-    for(var ri=0;ri<REPAS_LBLS.length;ri++) html+='<td style="text-align:center;font-size:8px;color:#000;font-weight:bold;">'+REPAS_LBLS[ri]+'</td>';
+    html += '<tr class="jour-hdr">';
+    html += '<td class="jour-name" colspan="2" style="border-left:6px solid '+jc+';">'+JOURS_FR[ji]+' '+jourDate.getDate()+'/'+(jourDate.getMonth()+1)+'</td>';
+    for(var ri=0;ri<REPAS_LBLS.length;ri++) html+='<td>'+REPAS_LBLS[ri]+'</td>';
     html += '</tr>';
 
     // Categories
@@ -3359,34 +3403,31 @@ function _genererPDF() {
       var used=catK!=='V'?(con[catK]||0):0;
       var bg=CAT_COLORS[catK], fg=CAT_TEXT[catK];
       html+='<tr>';
-      html+='<td class="cat-name" style="background:'+bg+';color:'+fg+';">'+CATS_LBLS[ci]+'</td>';
-      html+='<td class="boxes" style="background:'+bg+';color:'+fg+';">'+makeBoxes(used,CATS_QUOTAS[catK])+'</td>';
+      html+='<td class="cat-name"><span class="dot" style="background:'+fg+';"></span>'+CATS_LBLS[ci]+'</td>';
+      html+='<td class="boxes">'+makeBoxes(used,CATS_QUOTAS[catK])+'</td>';
       for(var ri2=0;ri2<REPAS_KEYS.length;ri2++){
         var items=rd[REPAS_KEYS[ri2]][catK]||[];
-        html+='<td style="background:'+bg+';text-align:center;">'+(items.length?items.join('<br>'):'')+'</td>';
+        html+='<td style="text-align:center;">'+(items.length?items.join('<br>'):'')+'</td>';
       }
       html+='</tr>';
     }
 
-    // Spacer between days
-    if(ji<6) html+='<tr><td class="no-border" colspan="8"></td></tr>';
     html+='</table>';
   }
 
-  // Ecarts row
-  var totalEc=0, ecDetails=[];
+  // Ecarts row (les 7 jours)
+  var totalEc=0, ecParts=[];
   for(var ji2=0;ji2<7;ji2++){
     var d2=daymap[dk(addD(bm,ji2))];
-    if(d2){var ec2=Math.round(d2.ec.reduce(function(s,e){return s+e.kcal;},0));totalEc+=ec2;if(ec2>0)ecDetails.push(JOURS_FR[ji2].slice(0,3)+': '+ec2+' kcal');}
+    var ec2=(d2&&d2.ec)?Math.round(d2.ec.reduce(function(s,e){return s+e.kcal;},0)):0;
+    totalEc+=ec2;
+    if(ec2>0)ecParts.push(JOURS_FR[ji2].slice(0,3)+' : '+ec2+' kcal');
   }
   html+='<table><tr class="ecarts-row">';
-  html+='<td colspan="2">Écarts : '+Math.round(totalEc)+' / 500 kcal</td>';
-  for(var ji3=0;ji3<6;ji3++){
-    var d3=daymap[dk(addD(bm,ji3))];
-    var ec3=d3?Math.round(d3.ec.reduce(function(s,e){return s+e.kcal;},0)):0;
-    html+='<td style="text-align:center;">'+(ec3>0?JOURS_FR[ji3].slice(0,3)+': '+ec3+' kcal':'')+'</td>';
-  }
+  html+='<td colspan="2">Écarts : '+totalEc+' / 500 kcal</td>';
+  html+='<td colspan="6" style="text-align:left;">'+(ecParts.length?ecParts.join('&nbsp;&nbsp;·&nbsp;&nbsp;'):'Aucun écart cette semaine')+'</td>';
   html+='</tr></table>';
+  html+='</div>';
   // Bannière en haut (fixée, cachée à l'impression)
   html+='<div class="topbar no-print">';
   html+='<button class="tb-close" onclick="window.close();if(!window.closed){history.back();}" aria-label="Fermer">✕</button>';
@@ -3395,6 +3436,13 @@ function _genererPDF() {
   html+='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v12M12 3l-4 4M12 3l4 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   html+='</button>';
   html+='</div>';
+  html+='<script>(function(){var S=document.getElementById("sheet"),W=740;'+
+    'function scr(){S.style.zoom="";S.style.zoom=Math.min(1.5,(document.documentElement.clientWidth-20)/W);}'+
+    'function prt(){S.style.zoom="";var H=S.offsetHeight;S.style.zoom=Math.min(1,1060/H);}'+
+    'window.addEventListener("load",scr);window.addEventListener("resize",scr);'+
+    'window.addEventListener("beforeprint",prt);window.addEventListener("afterprint",scr);'+
+    'if(window.matchMedia){var mq=matchMedia("print");if(mq.addListener)mq.addListener(function(e){if(e.matches)prt();else scr();});}'+
+    '})();<\/script>';
   html+='</body></html>';
 
   // CSS supplémentaire pour la bannière
@@ -3405,7 +3453,7 @@ function _genererPDF() {
     '.tb-share{color:#3d342c;}'+
     '.tb-title{font-size:16px;font-weight:600;color:#3d342c;font-family:inherit;}'+
     'body{padding-top:66px;}'+
-    '@media print{.no-print{display:none!important;}body{padding-top:0;}}'+
+    '@media print{.no-print{display:none!important;}body{padding:0!important;}}'+
     '</style></head>');
 
   var w=window.open('','_blank');
