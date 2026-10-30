@@ -2104,6 +2104,8 @@ document.addEventListener('click',function(){
 });
 function renderSummary(){
   var day=getDay(cur),q=getQuota(cur);
+  // Le total du jour est toujours recalculé depuis les repas : il ne peut plus se désynchroniser
+  recalcDayCon(day);
   document.getElementById('catsbox').innerHTML=
     catBlock('P',day,q)+catBlock('L',day,q)+catBlock('G',day,q)+catBlock('F',day,q)+catBlock('S',day,q);
   // Mémoriser l'état actuel pour comparer au prochain render (pour animer uniquement les nouvelles cases)
@@ -3493,39 +3495,56 @@ function exporterSemainier() {
 }
 
 function _semainierImgInit(){
-  var btn=document.getElementById("tbImg"),S=document.getElementById("sheet"),blob=null;
-  function setState(txt,dis){btn.disabled=!!dis;btn.style.opacity=dis?".45":"1";var t=document.getElementById("tbImgTxt");if(t)t.textContent=txt;}
-  function makeBlob(cb){
-    function run(){
+  var S=document.getElementById("sheet"),bi=document.getElementById("tbImg"),bp=document.getElementById("tbPdf"),
+      sh=document.getElementById("tbShare"),mn=document.getElementById("tbMenu"),
+      png=null,pdf=null,pdfState="wait";
+  var H2C="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+      JSP="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+  function lbl(id,t){var e=document.getElementById(id);if(e)e.textContent=t;}
+  function setI(t,dis){bi.disabled=!!dis;bi.style.opacity=dis?".45":"1";lbl("tbImgTxt",t);}
+  function setP(st,t){pdfState=st;bp.style.opacity=st==="wait"?".45":"1";lbl("tbPdfTxt",t);}
+  function loadScript(src,ok,ko){var e=document.createElement("script");e.src=src;e.onload=ok;e.onerror=ko;document.head.appendChild(e);}
+  function failPdf(){setP("fail","PDF");}
+  function makePdf(c){
+    loadScript(JSP,function(){
+      try{
+        var J=window.jspdf.jsPDF,d=new J({unit:"mm",format:"a4",orientation:"portrait"}),m=8,pw=210,ph=297;
+        var r=Math.min((pw-2*m)/c.width,(ph-2*m)/c.height),w=c.width*r,h=c.height*r;
+        d.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",(pw-w)/2,m,w,h);
+        pdf=d.output("blob");setP("ok","PDF");
+      }catch(e){failPdf();}
+    },failPdf);
+  }
+  function build(){
+    loadScript(H2C,function(){
       window.html2canvas(S,{scale:3,backgroundColor:"#ffffff",useCORS:true,logging:false,windowWidth:900,windowHeight:1600,
         onclone:function(d){var e=d.getElementById("sheet");e.style.zoom="1";e.style.margin="0";}
-      }).then(function(c){c.toBlob(function(b){cb(b);},"image/png");}).catch(function(){cb(null);});
-    }
-    if(window.html2canvas){run();return;}
-    var sc=document.createElement("script");
-    sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-    sc.onload=run;sc.onerror=function(){cb(null);};
-    document.head.appendChild(sc);
+      }).then(function(c){
+        c.toBlob(function(b){png=b;setI(b?"Image (Photos)":"Image indisponible",!b);},"image/png");
+        makePdf(c);
+      }).catch(function(){setI("Image indisponible",true);failPdf();});
+    },function(){setI("Image indisponible",true);failPdf();});
   }
-  setState("Image : préparation…",true);
-  window.addEventListener("load",function(){
-    setTimeout(function(){makeBlob(function(b){blob=b;setState(b?"Image (Photos)":"Image indisponible",!b);});},250);
-  });
-  var sh=document.getElementById("tbShare"),mn=document.getElementById("tbMenu"),pdf=document.getElementById("tbPdf");
-  function closeM(){mn.classList.remove("open");sh.setAttribute("aria-expanded","false");}
-  sh.addEventListener("click",function(e){e.stopPropagation();var o=mn.classList.toggle("open");sh.setAttribute("aria-expanded",o?"true":"false");});
-  document.addEventListener("click",function(e){if(!mn.contains(e.target))closeM();});
-  pdf.addEventListener("click",function(){closeM();window.print();});
-  btn.addEventListener("click",function(){
-    closeM();
-    if(!blob)return;
-    var f=null;try{f=new File([blob],"semainier.png",{type:"image/png"});}catch(e){}
+  function out(blob,name,type,title){
+    var f=null;try{f=new File([blob],name,{type:type});}catch(e){}
     if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
-      navigator.share({files:[f],title:"Semainier Gladder"}).catch(function(){});
+      navigator.share({files:[f],title:title}).catch(function(){});
     }else{
-      var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="semainier.png";
+      var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
       document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
     }
+  }
+  function closeM(){mn.classList.remove("open");sh.setAttribute("aria-expanded","false");}
+  setI("Image : préparation…",true);setP("wait","PDF : préparation…");
+  window.addEventListener("load",function(){setTimeout(build,250);});
+  sh.addEventListener("click",function(e){e.stopPropagation();var o=mn.classList.toggle("open");sh.setAttribute("aria-expanded",o?"true":"false");});
+  document.addEventListener("click",function(e){if(!mn.contains(e.target))closeM();});
+  bi.addEventListener("click",function(){closeM();if(png)out(png,"semainier.png","image/png","Semainier Gladder");});
+  bp.addEventListener("click",function(){
+    if(pdfState==="wait")return;
+    closeM();
+    if(pdfState==="ok"&&pdf)out(pdf,"semainier.pdf","application/pdf","Semainier Gladder");
+    else window.print();
   });
 }
 
@@ -3648,7 +3667,7 @@ function _genererPDF() {
   html+='</button>';
   html+='<div class="tb-menu" id="tbMenu" role="menu">';
   html+='<button class="tb-item" id="tbImg" role="menuitem" disabled><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="10" r="1.8" stroke="currentColor" stroke-width="2"/><path d="M21 16l-5-5-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="tbImgTxt">Image (Photos)</span></button>';
-  html+='<button class="tb-item" id="tbPdf" role="menuitem"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>PDF</span></button>';
+  html+='<button class="tb-item" id="tbPdf" role="menuitem"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="tbPdfTxt">PDF</span></button>';
   html+='</div>';
   html+='</div>';
   html+='</div>';
