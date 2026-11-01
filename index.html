@@ -988,6 +988,7 @@ a{color:var(--ink)}a:hover{color:var(--text2)}
 .qa-prev{font-size:13px;color:var(--text2);margin-top:8px;min-height:18px}.qa-prev b{color:var(--ink)}
 .qa-note{margin-top:12px;font-size:13px;color:var(--green);background:var(--green-soft);border-radius:14px;padding:10px 14px}
 .qa-go{margin-top:18px;width:100%}
+.rtm-btn{width:100%;margin-top:14px}
 .qa-go:disabled{opacity:.4;cursor:default}
 .vg-txt{resize:none;min-height:84px;font-family:var(--font);line-height:1.4}
 
@@ -1417,7 +1418,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 <div class="modal-ov" id="vgmodal" onclick="if(event.target===this)vgClose()">
   <div class="modal qa-modal" role="dialog" aria-labelledby="vgTitle">
     <div class="qa-hd"><div class="mtitle" id="vgTitle">Légumes</div><button class="qa-x" onclick="vgClose()" aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="mlabel">Repas</div>
+    <div class="mlabel" id="vgMealsLbl">Repas</div>
     <div class="qa-meals" id="vgMeals"></div>
     <div class="mlabel">Vos légumes</div>
     <textarea class="minput vg-txt" id="vgTxt" rows="3" placeholder="Ex : courgettes, salade, tomates" oninput="vgGo()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();vgSubmit();}"></textarea>
@@ -1430,12 +1431,26 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 <div class="modal-ov" id="qamodal" onclick="if(event.target===this)qaClose()">
   <div class="modal qa-modal" role="dialog" aria-labelledby="qaTitle">
     <div class="qa-hd"><div class="mtitle" id="qaTitle">Ajouter</div><button class="qa-x" onclick="qaClose()" aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="mlabel">Repas</div>
+    <div class="mlabel" id="qaMealsLbl">Repas</div>
     <div class="qa-meals" id="qaMeals"></div>
     <div class="mlabel" id="qaFoodLbl">Aliment</div>
     <div id="qaFoodBox"></div>
     <div id="qaQtyBox"></div>
     <button class="msave qa-go" id="qaGo" onclick="qaSubmit()" disabled>Ajouter</button>
+  </div>
+</div>
+
+<!-- Modal recette vers repas -->
+<div class="modal-ov" id="rtmmodal" onclick="if(event.target===this)rtmClose()">
+  <div class="modal qa-modal" role="dialog" aria-labelledby="rtmTitle">
+    <div class="qa-hd"><div class="mtitle" id="rtmTitle">Ajouter à un repas</div><button class="qa-x" onclick="rtmClose()" aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="qa-note" id="rtmName" style="font-weight:600;color:var(--ink)"></div>
+    <div class="mlabel">Nombre de parts</div>
+    <div class="qa-step"><button type="button" class="qs-b" onclick="rtmStep(-1)" aria-label="Moins">−</button><div class="qs-mid"><input id="rtmQty" class="qs-in" type="text" inputmode="decimal" autocomplete="off" value="1" onfocus="this.select()" oninput="rtmGo()" onblur="rtmNorm()"/></div><button type="button" class="qs-b" onclick="rtmStep(1)" aria-label="Plus">+</button></div>
+    <div class="qa-prev" id="rtmPrev"></div>
+    <div class="mlabel">Repas</div>
+    <div class="qa-meals" id="rtmMeals"></div>
+    <button class="msave qa-go" id="rtmGoBtn" onclick="rtmSubmit()" disabled>Ajouter</button>
   </div>
 </div>
 
@@ -2873,8 +2888,38 @@ function renderRecList(k){
     var ings=(r.ing||'').split(/\n|,\s+/).map(function(x){return x.trim();}).filter(Boolean).map(function(x){return '<span class="ringchip">'+x+'</span>';}).join('');
     var pp=(r.prep||'');var steps=(pp.indexOf('\n')>-1?pp.split('\n'):pp.replace(/([.!?])\s+/g,'$1|').split('|')).map(function(x){return x.trim();}).filter(Boolean).map(function(x,i){return '<div class="rstep"><span class="rn">'+(i+1)+'</span><span>'+x+'</span></div>';}).join('');
     return'<div class="rcard"><div class="rchdr" onclick="togRec('+r.id+')"><div style="flex:1"><div class="rcname">'+r.name+'</div><div class="rchips">'+chips+'</div>'+(r.note?'<div class="rcbilan"><em>'+r.note+'</em></div>':'')+'</div><span class="rchev'+(r._o?' up':'')+'" aria-hidden="true">&#8963;</span></div>'+
-    '<div class="rcbody'+(r._o?' open':'')+'">'+(r.meta?'<div class="rmeta">'+r.meta+'</div>':'')+'<div class="rst">Ingrédients</div><div class="ringchips">'+(ings||'—')+'</div>'+(steps?'<div class="rst" style="margin-top:14px">Préparation</div>'+steps:'')+(isOwn?'<button class="rdelbtn" onclick="delRec('+r.id+')">Supprimer</button>':'')+'</div></div>';
+    '<div class="rcbody'+(r._o?' open':'')+'">'+(r.meta?'<div class="rmeta">'+r.meta+'</div>':'')+'<div class="rst">Ingrédients</div><div class="ringchips">'+(ings||'—')+'</div>'+(steps?'<div class="rst" style="margin-top:14px">Préparation</div>'+steps:'')+'<button class="msave rtm-btn" onclick="rtmOpen('+r.id+')">+ Ajouter à un repas</button>'+(isOwn?'<button class="rdelbtn" onclick="delRec('+r.id+')">Supprimer</button>':'')+'</div></div>';
   }).join('');
+}
+var RTM={r:null,mi:null};
+function rtmQ(){var v=parseFloat(String(document.getElementById('rtmQty').value).replace(',','.'));return v>0?v:0;}
+function rtmMealsR(){var ms=getDay(cur).meals;document.getElementById('rtmMeals').innerHTML=ms.map(function(m,i){return'<button class="qa-chip'+(i===RTM.mi?' on':'')+'" onclick="RTM.mi='+i+';rtmMealsR();rtmGo()">'+qaEsc(m.name)+'</button>';}).join('');}
+function rtmGo(){
+  var q=rtmQ(),r=RTM.r,b=document.getElementById('rtmGoBtn'),p=document.getElementById('rtmPrev');
+  if(p&&r){var ks=Object.keys(r.bilan||{}).filter(function(k){return r.bilan[k]>0;});p.innerHTML=q>0&&ks.length?'= <b>'+ks.map(function(k){return String(Math.round(r.bilan[k]*q*100)/100).replace('.',',')+' '+CL[k];}).join(' · ')+'</b>':'';}
+  var ms=getDay(cur).meals,mn=RTM.mi!==null&&ms[RTM.mi]?ms[RTM.mi].name:'';
+  b.disabled=!(q>0&&mn);b.textContent=mn?'Ajouter · '+mn:'Ajouter';
+}
+function rtmStep(d){var v=rtmQ();v=Math.round((v+d)*100)/100;if(v<0.5)v=0.5;document.getElementById('rtmQty').value=String(v).replace('.',',');rtmGo();}
+function rtmNorm(){var v=rtmQ();if(v>0)document.getElementById('rtmQty').value=String(Math.round(v*100)/100).replace('.',',');}
+function rtmClose(){document.getElementById('rtmmodal').classList.remove('open');}
+function rtmOpen(id){
+  var r=null;for(var i=0;i<recipes.length;i++){if(recipes[i].id===id){r=recipes[i];break;}}
+  if(!r)return;
+  var hr=new Date().getHours();RTM={r:r,mi:hr<10?0:hr<12?1:hr<15?2:hr<18?3:4};
+  if(!getDay(cur).meals[RTM.mi])RTM.mi=0;
+  document.getElementById('rtmName').textContent=r.name;
+  document.getElementById('rtmQty').value='1';
+  rtmMealsR();rtmGo();
+  document.getElementById('rtmmodal').classList.add('open');
+}
+function rtmSubmit(){
+  var q=rtmQ(),r=RTM.r;if(!r||!(q>0)||RTM.mi===null)return;
+  var day=getDay(cur),meal=day.meals[RTM.mi];if(!meal)return;
+  var bilanTotal={},keys=Object.keys(r.bilan||{});
+  for(var i=0;i<keys.length;i++){var k=keys[i],val=Math.round(r.bilan[k]*q*100)/100;if(val>0){bilanTotal[k]=val;if(day.con[k]!==undefined)day.con[k]=Math.round((day.con[k]+val)*1000)/1000;}}
+  meal.entries.push({id:idc++,_t:'rec',name:r.name,parts:q,bilan:r.bilan,bilanTotal:bilanTotal,cases:0,cat:'recipe'});
+  rtmClose();render();saveData();
 }
 function togRec(id){for(var i=0;i<recipes.length;i++){if(recipes[i].id===id){recipes[i]._o=!recipes[i]._o;break;}}if(curRecCat)renderRecList(curRecCat);}
 function delRec(id){recipes=recipes.filter(function(r){return r.id!==id;});if(curRecCat)renderRecList(curRecCat);renderRecHome();saveData();}
@@ -3300,7 +3345,7 @@ function renderGoal(){
   '</div>';
   el.innerHTML=html;
 }
-var SPER=30;
+var SPER=0;
 function applyPer(){if(SPER===0){rangeStart=null;rangeEnd=null;var a0=document.getElementById('dStart'),b0=document.getElementById('dEnd');if(a0)a0.value='';if(b0)b0.value='';return;}var sorted=weights.slice().sort(function(a,b){return a.date<b.date?-1:1;});var end=sorted.length?dateFromIso(sorted[sorted.length-1].date):new Date();var st=new Date(end);st.setDate(st.getDate()-SPER+1);rangeStart=isoFromDate(st);rangeEnd=isoFromDate(end);var a=document.getElementById('dStart'),b=document.getElementById('dEnd');if(a)a.value=rangeStart;if(b)b.value=rangeEnd;}
 function setPer(p){SPER=p;applyPer();renderSuivi();}
 function renderSuivi(){
@@ -3488,13 +3533,13 @@ function switchTab(tab){
 var QA={mi:0,item:null,q:''};
 function qaEsc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function quickAdd(pre){
-  var hr=new Date().getHours(),dm=hr<10?0:hr<12?1:hr<15?2:hr<18?3:4;QA={mi:(typeof pre==='number'||pre==='ec')?pre:dm,item:null,q:'',ecl:''};
+  var hr=new Date().getHours(),dm=hr<10?0:hr<12?1:hr<15?2:hr<18?3:4;QA={mi:(typeof pre==='number'||pre==='ec')?pre:dm,item:null,q:'',ecl:'',lock:typeof pre==='number'};
   qaRender();document.getElementById('qamodal').classList.add('open');
   setTimeout(function(){var s=document.getElementById('qaSearch');if(s)s.focus();},120);
 }
 function qaClose(){document.getElementById('qamodal').classList.remove('open');}
 function qaMeal(i){var was=QA.mi==='ec';QA.mi=i;qaRenderMeals();if(was!==(i==='ec'))qaRenderFood();else qaRenderGo();}
-function qaRenderMeals(){var ms=getDay(cur).meals;document.getElementById('qaMeals').innerHTML=ms.map(function(m,i){return'<button class="qa-chip'+(i===QA.mi?' on':'')+'" onclick="qaMeal('+i+')">'+qaEsc(m.name)+'</button>';}).join('')+'<button class="qa-chip qa-chip-ec'+(QA.mi==='ec'?' on':'')+'" onclick="qaMeal(\'ec\')">Écarts</button>';}
+function qaRenderMeals(){var lk=!!QA.lock;document.getElementById('qaMealsLbl').style.display=lk?'none':'';document.getElementById('qaMeals').style.display=lk?'none':'';var ms=getDay(cur).meals;document.getElementById('qaMeals').innerHTML=ms.map(function(m,i){return'<button class="qa-chip'+(i===QA.mi?' on':'')+'" onclick="qaMeal('+i+')">'+qaEsc(m.name)+'</button>';}).join('')+'<button class="qa-chip qa-chip-ec'+(QA.mi==='ec'?' on':'')+'" onclick="qaMeal(\'ec\')">Écarts</button>';}
 function qaTag(x){
   if(x._t==='rec')return'<span class="actag" style="background:var(--purple-soft);color:var(--purple)">Recette</span>';
   if(x._t==='ec')return'<span class="actag" style="background:#F3EADF;color:#8A6236">Écart</span>';
@@ -3697,16 +3742,17 @@ function _genererPDF() {
     return q+'<span class="qn'+(used>quota?' over':'')+'">'+(Math.round(used*10)/10)+'/'+quota+'</span>';
   }
 
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Semainier</title><style>';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="color-scheme" content="light only"/><title>Semainier</title><style>';
   html += '@page{size:A4 portrait;margin:6mm;}';
   html += '*{box-sizing:border-box;}';
-  html += 'html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}';
+  html += 'html{-webkit-text-size-adjust:100%;text-size-adjust:100%;color-scheme:light only;}';
   html += 'body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#141414;margin:0;padding:10px;background:#fff;}';
   html += '#sheet{width:740px;margin:0 auto;}';
   html += 'h1{font-size:15px;font-weight:bold;margin:0 0 8px;}';
   html += 'table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 7px;page-break-inside:avoid;break-inside:avoid;}';
-  html += 'td{padding:2px 4px;border-bottom:1px solid #aaa;border-left:1px solid #aaa;vertical-align:middle;overflow-wrap:break-word;line-height:1.2;}';
+  html += 'td{padding:2px 4px;border-bottom:1px solid #666;border-left:1px solid #666;vertical-align:middle;overflow-wrap:break-word;line-height:1.2;}';
   html += 'td:first-child{border-left:none;}';
+  html += 'table{border:1px solid #666;}tr:nth-child(even) td{background:#f4f4f4;}';
   html += '.jour-hdr td{background:#141414;color:#fff;border:none;font-weight:bold;font-size:9px;text-align:center;padding:4px;}';
   html += '.jour-hdr td.jour-name{font-size:13px;text-align:left;padding-left:8px;}';
   html += '.cat-name{font-weight:bold;}';
@@ -3730,7 +3776,7 @@ function _genererPDF() {
     var jc = JOUR_COLORS[ji];
 
     var rd = {};
-    REPAS_KEYS.forEach(function(rk){ rd[rk]={P:[],L:[],G:[],V:[],F:[],S:[]}; });
+    REPAS_KEYS.forEach(function(rk){ rd[rk]={P:[],L:[],G:[],V:[],F:[],S:[],E:[]}; });
     if (dayData.meals) {
       var mim={pdej:0,coll_matin:1,dejeuner:2,coll_apm:3,diner:4,coll_soir:5};
       Object.keys(mim).forEach(function(rk){
@@ -3738,6 +3784,11 @@ function _genererPDF() {
         if(!meal||!meal.entries)return;
         meal.entries.forEach(function(e){
           if(e._t==='rec'){var b=e.bilanTotal||e.bilan||{};Object.keys(b).forEach(function(k){if(b[k]>0&&rd[rk][k]!==undefined)rd[rk][k].push(e.parts+'pt '+e.name);});}
+          else if(e._t==='ec'){
+            var eb=e.bilanTotal||e.bilan||{};
+            Object.keys(eb).forEach(function(k){if(eb[k]>0&&k!=='E'&&rd[rk][k]!==undefined)rd[rk][k].push(e.name);});
+            if(e.kcal>0)rd[rk].E.push(e.name+' ('+Math.round(e.kcal)+' kcal)');
+          }
           else if(e.cat&&e.cat!=='recipe'&&rd[rk][e.cat]!==undefined){rd[rk][e.cat].push(e.cat==='V'?e.name:e.qty+' '+e.unit+' '+e.name);}
         });
       });
@@ -3764,6 +3815,13 @@ function _genererPDF() {
       for(var ri2=0;ri2<REPAS_KEYS.length;ri2++){
         var items=rd[REPAS_KEYS[ri2]][catK]||[];
         html+='<td style="text-align:center;">'+(items.length?items.join('<br>'):'')+'</td>';
+      }
+      html+='</tr>';
+    }
+    if(REPAS_KEYS.some(function(k){return rd[k].E.length;})){
+      html+='<tr><td class="cat-name" colspan="2">Écarts</td>';
+      for(var rie=0;rie<REPAS_KEYS.length;rie++){
+        html+='<td style="text-align:center;">'+rd[REPAS_KEYS[rie]].E.join('<br>')+'</td>';
       }
       html+='</tr>';
     }
@@ -3926,7 +3984,7 @@ function _genererXLSX() {
 
 
 var VG={mi:0};
-function vgMealsR(){var ms=getDay(cur).meals;document.getElementById('vgMeals').innerHTML=ms.map(function(m,i){return'<button class="qa-chip'+(i===VG.mi?' on':'')+'" onclick="VG.mi='+i+';vgMealsR();vgGo()">'+qaEsc(m.name)+'</button>';}).join('');}
+function vgMealsR(){var lk=typeof VG.mi==='number';document.getElementById('vgMealsLbl').style.display=lk?'none':'';document.getElementById('vgMeals').style.display=lk?'none':'';var ms=getDay(cur).meals;document.getElementById('vgMeals').innerHTML=ms.map(function(m,i){return'<button class="qa-chip'+(i===VG.mi?' on':'')+'" onclick="VG.mi='+i+';vgMealsR();vgGo()">'+qaEsc(m.name)+'</button>';}).join('');}
 function vgGo(){var t=document.getElementById('vgTxt').value.trim(),g=document.getElementById('vgGo');g.disabled=!t;g.textContent='Ajouter · '+getDay(cur).meals[VG.mi].name;}
 function vgClose(){document.getElementById('vgmodal').classList.remove('open');}
 openVegBox=function(ev,mi){
