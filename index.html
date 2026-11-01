@@ -982,6 +982,9 @@ a{color:var(--ink)}a:hover{color:var(--text2)}
 .qa-rh{font:700 10.5px var(--font);letter-spacing:.05em;text-transform:uppercase;color:var(--text3);padding:8px 4px 4px}
 .qa-rr{display:flex;align-items:center;gap:8px;padding:7px 4px;border:none;border-bottom:1px solid var(--border-soft);background:none;font:500 13px var(--font);color:var(--ink);text-align:left;cursor:pointer}
 .qa-rr:active{background:var(--bg)}
+.vg-rc{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.vg-r{padding:6px 11px;border-radius:15px;border:1.5px solid var(--border-soft);background:none;font:600 12.5px var(--font);color:var(--ink);cursor:pointer}
+.vg-r.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .qa-rp{width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:13px;line-height:1;flex:none}
 .qa-rn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .qa-rq{font-size:11.5px;color:var(--text3);white-space:nowrap}
@@ -1428,6 +1431,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     <div class="qa-meals" id="vgMeals"></div>
     <div class="mlabel">Vos légumes</div>
     <textarea class="minput vg-txt" id="vgTxt" rows="3" placeholder="Ex : courgettes, salade, tomates" oninput="vgGo()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();vgSubmit();}"></textarea>
+    <div id="vgRec"></div>
     <div class="qa-note">À volonté, aucune case décomptée. Séparez-les par des virgules.</div>
     <button class="msave qa-go" id="vgGo" onclick="vgSubmit()" disabled>Ajouter</button>
   </div>
@@ -4040,7 +4044,37 @@ function _genererXLSX() {
 
 var VG={mi:0};
 function vgMealsR(){var lk=typeof VG.mi==='number';document.getElementById('vgMealsLbl').style.display=lk?'none':'';document.getElementById('vgMeals').style.display=lk?'none':'';var ms=getDay(cur).meals;document.getElementById('vgMeals').innerHTML=ms.map(function(m,i){return'<button class="qa-chip'+(i===VG.mi?' on':'')+'" onclick="VG.mi='+i+';vgMealsR();vgGo()">'+qaEsc(m.name)+'</button>';}).join('');}
-function vgGo(){var t=document.getElementById('vgTxt').value.trim(),g=document.getElementById('vgGo');g.disabled=!t;g.textContent='Ajouter · '+getDay(cur).meals[VG.mi].name;}
+function vgItems(){return document.getElementById('vgTxt').value.split(/[,;]/).map(function(x){return x.trim().toLowerCase();}).filter(Boolean);}
+function vgRecR(){
+  var el=document.getElementById('vgRec');if(!el)return;
+  var ms=getDay(cur).meals,mn=ms[VG.mi]?ms[VG.mi].name:null;if(!mn){el.innerHTML='';return;}
+  var t0=new Date(dk(new Date())).getTime(),map={};
+  Object.keys(daymap).forEach(function(k){
+    var d=daymap[k];if(!d||!d.meals)return;var age=Math.max(0,(t0-new Date(k).getTime())/864e5);
+    d.meals.forEach(function(m){
+      if(!m||m.name!==mn||!m.entries)return;
+      m.entries.forEach(function(e){
+        if(!e||e.cat!=='V'||!e.name)return;
+        e.name.split(/[,;]/).forEach(function(n){
+          n=n.trim();if(!n)return;var key=n.toLowerCase(),o=map[key];
+          if(!o)o=map[key]={n:n,sc:0};o.sc+=1+Math.max(0,30-age)/30;
+        });
+      });
+    });
+  });
+  var list=Object.keys(map).map(function(x){return map[x];}).sort(function(a,b){return b.sc-a.sc;}).slice(0,8);
+  VG.rec=list.map(function(o){return o.n.charAt(0).toUpperCase()+o.n.slice(1);});
+  if(!list.length){el.innerHTML='';return;}
+  var cur0=vgItems();
+  el.innerHTML='<div class="qa-rh">Récents · '+qaEsc(mn)+'</div><div class="vg-rc">'+VG.rec.map(function(n,i){return'<button type="button" class="vg-r'+(cur0.indexOf(n.toLowerCase())>-1?' on':'')+'" onclick="vgRecTap('+i+')">'+qaEsc(n)+'</button>';}).join('')+'</div>';
+}
+function vgRecTap(i){
+  var n=VG.rec[i];if(!n)return;var ta=document.getElementById('vgTxt'),low=n.toLowerCase(),its=ta.value.split(/[,;]/).map(function(x){return x.trim();}).filter(Boolean);
+  var idx=its.map(function(x){return x.toLowerCase();}).indexOf(low);
+  if(idx>-1)its.splice(idx,1);else its.push(n);
+  ta.value=its.join(', ');vgGo();
+}
+function vgGo(){vgRecR();var t=document.getElementById('vgTxt').value.trim(),g=document.getElementById('vgGo');g.disabled=!t;g.textContent='Ajouter · '+getDay(cur).meals[VG.mi].name;}
 function vgClose(){document.getElementById('vgmodal').classList.remove('open');}
 openVegBox=function(ev,mi){
   if(ev&&ev.stopPropagation)ev.stopPropagation();
